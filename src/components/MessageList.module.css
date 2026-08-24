@@ -23,6 +23,13 @@
   animation: message-enter 400ms ease-out backwards;
 }
 
+/* User messages are content-sized and anchored to the right edge. */
+.messageRow:has(.rowUser) {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
 /* Stagger each message by ~100ms to communicate hierarchy */
 .messageRow:nth-child(1) { animation-delay: 0ms; }
 .messageRow:nth-child(2) { animation-delay: 100ms; }

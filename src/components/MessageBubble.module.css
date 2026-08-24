@@ -6,6 +6,8 @@
 }
 
 .rowUser {
+  width: fit-content;
+  max-width: 100%;
   align-items: flex-end;
 }
 
