@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import styles from "./ChatInput.module.css";
 import logoFull from "@/assets/icons/logo-full.png";
 import type { ChatAttachment } from "@/types";
@@ -236,7 +237,7 @@ export default function ChatInput({
             ))}
           </div>
         )}
-        {previewUrl && (
+        {previewUrl && typeof document !== "undefined" && createPortal(
           <div
             className={styles.previewOverlay}
             role="dialog"
@@ -258,7 +259,8 @@ export default function ChatInput({
               className={styles.previewImage}
               onClick={(event) => event.stopPropagation()}
             />
-          </div>
+          </div>,
+          document.body,
         )}
         <div className={styles.inputRow}>
           <div
