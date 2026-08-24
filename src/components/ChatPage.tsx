@@ -67,7 +67,7 @@ function getTimeGreeting() {
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState("");
   const [greeting, setGreeting] = useState("Hello");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -140,6 +140,7 @@ export default function ChatPage() {
   const handleNewChat = useCallback(() => {
     setMessages([]);
     setSelectedConversationId("");
+    setSidebarOpen(false);
   }, []);
 
   return (

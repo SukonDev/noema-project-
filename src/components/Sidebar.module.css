@@ -156,11 +156,6 @@
   background: #ededeb;
 }
 
-.itemDot {
-  color: #b6b6b3;
-  font-size: 15px;
-}
-
 .itemTitle {
   font-size: var(--text-small);
   font-weight: 500;

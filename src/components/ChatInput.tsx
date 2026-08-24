@@ -27,9 +27,9 @@ export default function ChatInput({
   const modelRef = useRef<HTMLDivElement>(null);
 
   const MODELS = [
-    { id: "Zeta", label: "Zeta", hint: "Fastest" },
-    { id: "Alpha", label: "Alpha", hint: "Balanced" },
-    { id: "Beta", label: "Beta", hint: "Most powerful" },
+    { id: "Zeta", label: "Zeta" },
+    { id: "Alpha", label: "Alpha" },
+    { id: "Beta", label: "Beta" },
   ] as const;
 
   // Close the menus when clicking outside of them.
@@ -256,7 +256,6 @@ export default function ChatInput({
                       }}
                     >
                       {m.label}
-                      <span className={styles.modelExtra}>{m.hint}</span>
                     </button>
                   ))}
                 </div>
