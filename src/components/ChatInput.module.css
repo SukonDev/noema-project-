@@ -545,6 +545,24 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  .modelPicker,
+  .attachButton,
+  .iconControl {
+    color: #d7d2c9;
+  }
+
+  .modelPicker:hover,
+  .attachButton:hover,
+  .attachButton[aria-expanded="true"],
+  .iconControl:hover {
+    background: #292929;
+    color: #ffffff;
+  }
+
+  .textarea::placeholder {
+    color: #8f8b84;
+  }
+
   .welcomeWrapper .container {
     border-color: #454545;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
@@ -576,5 +594,9 @@
   .modelMenu .menuItem[aria-selected="true"] {
     background: #2c2c2c;
     color: #ffffff;
+  }
+
+  .menuItem:hover {
+    background: #292929;
   }
 }
