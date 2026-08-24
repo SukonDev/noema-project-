@@ -204,16 +204,20 @@
 .modelMenu {
   left: auto;
   right: 0;
-  min-width: 178px;
+  min-width: 154px;
   background: #ffffff;
   border-color: #dfddd6;
   border-radius: 9px;
+  padding: 3px;
   box-shadow: 0 12px 28px rgba(55, 50, 42, 0.14);
   transform-origin: bottom right;
 }
 
 .modelMenu .menuItem {
   border-radius: 5px;
+  padding: 6px 9px;
+  gap: 8px;
+  font-size: 13px;
   color: #3f3f3f;
 }
 
@@ -281,17 +285,27 @@
   .menu {
     left: auto;
     right: 0;
-    min-width: 200px;
+    min-width: 166px;
     transform-origin: bottom right;
   }
 
   .menuItem {
-    padding: 13px 14px;
-    font-size: 15px;
+    padding: 8px 10px;
+    font-size: 14px;
   }
 
   .modelPicker {
-    padding: 8px 10px;
+    padding: 3px 6px;
+    border-radius: 5px;
+  }
+
+  .modelMenu {
+    min-width: 146px;
+  }
+
+  .modelMenu .menuItem {
+    padding: 6px 8px;
+    font-size: 13px;
   }
 }
 
