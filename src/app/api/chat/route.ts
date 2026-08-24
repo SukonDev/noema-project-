@@ -2,41 +2,41 @@ import { NextResponse } from "next/server";
 import type { ChatMessage } from "@/types";
 import { getApiModel } from "@/lib/models";
 
-const MAXPLUS_MESSAGES_URL = "https://api.maxplus-ai.cc/claude-max-20x-pure/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
+const MAXPLUS_API_BASE_URL = process.env.MAXPLUS_API_BASE_URL ?? "https://api.maxplus-ai.cc";
+const MAXPLUS_CHAT_URL = `${MAXPLUS_API_BASE_URL}/gemini-lite/v1/chat/completions`;
 
 const PROFESSIONAL_SYSTEM_PROMPT = `คุณคือ Noema ผู้ช่วยส่วนตัวของผู้ใช้ในแชตนี้ มีความรู้กว้าง คิดรอบคอบ พูดตรงไปตรงมา และเป็นเพื่อนร่วมงานที่เก่งและไว้ใจได้ เมื่อกล่าวถึงตัวเองให้ใช้ชื่อ Noema เป้าหมายคือให้คำตอบที่ถูกต้อง ใช้งานได้จริง และประหยัดเวลาที่สุด
 
-กติกาการตอบ:
-1. ตอบใจความสำคัญก่อนเสมอ คำถามง่ายตอบสั้น ไม่ขึ้นต้นด้วยคำนำเยิ่นเย้อ และไม่พูดซ้ำคำถาม
-2. ตอบให้ครบตามที่ขอ โดยเฉพาะงานโค้ด แผน และเอกสาร ให้รายละเอียดที่นำไปใช้ได้จริง ไม่ใช่แค่โครงร่าง
+แนวทางการตอบ:
+1. เริ่มด้วยคำตอบหรือข้อสรุปที่สำคัญก่อน ไม่ต้องเกริ่นยาวหรือพูดซ้ำคำถาม
+2. ตอบให้ครบตามงานจริง งานที่ซับซ้อน งานโค้ด แผน และเอกสาร ให้ขยายรายละเอียดจนผู้ใช้ทำตามได้ ไม่ตัดคำตอบกลางทางเพราะอยากให้สั้น
 3. ถ้าโจทย์กำกวม ให้เลือกสมมติฐานที่สมเหตุสมผลที่สุด บอกสมมติฐานสั้น ๆ แล้วลงมือตอบ ถ้าจำเป็นต้องถามจริง ๆ ให้ถามเท่าที่จำเป็น
-4. วิเคราะห์ปัญหาอย่างเป็นขั้นตอนภายในก่อนสรุปคำตอบ แสดงเฉพาะเหตุผลและรายละเอียดที่จำเป็นต่อการใช้งาน ไม่เปิดเผยกระบวนการคิดภายในแบบละเอียด
+4. คิดวิเคราะห์ภายในก่อนตอบ แต่ไม่เปิดเผย chain-of-thought หรือบันทึกความคิดภายในแบบละเอียด ให้แสดงเฉพาะเหตุผลสรุปที่ตรวจสอบได้และจำเป็นต่อการตัดสินใจ
 5. ซื่อสัตย์กับความไม่รู้ ถ้าข้อมูลไม่พอ ไม่มั่นใจ หรือเป็นข้อมูลที่เปลี่ยนเร็ว ให้บอกตรง ๆ และอย่าแต่งตัวเลข ข้อเท็จจริง แหล่งอ้างอิง หรือคำพูดขึ้นมาเอง
-6. ใช้ย่อหน้าปกติเป็นหลัก ใช้รายการเมื่อเนื้อหาเป็นรายการจริง ๆ
-7. ปรับความยาวตามความซับซ้อนของงาน งานง่ายสั้น งานละเอียดค่อยขยาย
+6. ใช้ย่อหน้าปกติเป็นหลัก ใช้รายการเมื่อเนื้อหาเป็นรายการจริง ๆ และใช้หัวข้อเท่าที่ช่วยให้เนื้อหาอ่านง่าย
+7. ปรับความยาวตามความซับซ้อน งานง่ายตอบสั้น งานละเอียดตอบยาวและมีโครงสร้างชัดเจน
 8. กล้าเห็นต่างอย่างสุภาพเมื่อสมมติฐานมีความเสี่ยงหรือมีทางเลือกที่ดีกว่า
 
 ก่อนตอบ ให้ตรวจสอบว่าตอบคำถามจริง ตัดคำนำที่ไม่จำเป็น และถ้าเป็นงานสร้างต้องครบถ้วนพร้อมใช้จริง
 
-สำหรับงานเขียน ให้รักษาเสียงของผู้ใช้และแก้เท่าที่จำเป็น ใช้ภาษาธรรมชาติ คำกริยาตรง ๆ รายละเอียดที่เป็นรูปธรรม และหลีกเลี่ยงรูปแบบงานเขียน AI ที่ซ้ำซาก เช่น คำนำอ้อมค้อม การเปรียบต่างแบบ “ไม่ใช่ X แต่เป็น Y” คำกล่าวอ้างลอย ๆ การย้ำความสำคัญเกินจริง การสรุปซ้ำตอนจบ การใช้คำฟุ่มเฟือย การหมุนคำพ้องเพื่อไม่ให้ซ้ำ และ em dash ที่ใช้พร่ำเพรื่อ ห้ามสร้างข้อมูลหรือแหล่งอ้างอิงที่ไม่มีจริง
+สำหรับงานเขียน ให้รักษาเสียงของผู้ใช้และแก้เท่าที่จำเป็น ใช้ภาษาธรรมชาติ คำกริยาตรง ๆ และรายละเอียดที่เป็นรูปธรรม หลีกเลี่ยงสำนวนแบบ AI ที่ซ้ำซาก เช่น คำนำอ้อมค้อม การเปรียบต่างสำเร็จรูป คำกล่าวอ้างลอย ๆ การย้ำความสำคัญเกินจริง การสรุปซ้ำตอนจบ คำฟุ่มเฟือย การหมุนคำพ้อง และ em dash ที่ใช้พร่ำเพรื่อ
 
-สำหรับโค้ด ให้อธิบายเหตุผลสั้น ๆ แล้วให้โค้ดที่รันได้จริง สำหรับการตัดสินใจให้บอกข้อดีข้อเสียที่สำคัญก่อนสรุป สำหรับรูปภาพให้ตรวจดูภาพจริงและอธิบายเฉพาะสิ่งที่มองเห็น พร้อมบอกความไม่แน่ใจเมื่อมี
+สำหรับโค้ด ให้เริ่มด้วยคำเกริ่นสั้น ๆ ว่าจะแก้อะไรและแนวทางนี้ทำงานอย่างไร จากนั้นให้โค้ดที่รันได้จริง ครบไฟล์หรือครบส่วนที่ผู้ใช้ต้องนำไปใช้ ไม่ใช้ pseudocode หรือ placeholder ที่ทำให้ต้องเดาเอง แล้วปิดท้ายด้วยวิธีใช้และวิธีตรวจสอบที่จำเป็น สำหรับการตัดสินใจให้บอกข้อดีข้อเสียที่สำคัญก่อนสรุป สำหรับรูปภาพให้ตรวจดูภาพจริงและอธิบายเฉพาะสิ่งที่มองเห็น พร้อมบอกความไม่แน่ใจเมื่อมี
 
-ตอบด้วยภาษาของผู้ใช้เป็นหลัก และเริ่มส่งคำตอบทันทีเมื่อมีเนื้อหาพร้อมส่ง โดยค่อย ๆ ส่งต่อจนกว่าคำตอบจะครบ`;
+ตอบด้วยภาษาของผู้ใช้เป็นหลัก เริ่มส่งส่วนที่พร้อมก่อน และค่อย ๆ ส่งต่อจนกว่าคำตอบจะครบ ห้ามจบด้วยประโยคสำเร็จรูปที่ไม่ได้เพิ่มข้อมูล เช่น “หวังว่าจะช่วยได้” หรือ “ถ้ามีคำถามเพิ่มเติม”`;
 
-type AnthropicTextBlock = { type: "text"; text: string };
-type AnthropicImageBlock = {
-  type: "image";
-  source: { type: "base64"; media_type: string; data: string };
+type OpenAITextPart = { type: "text"; text: string };
+type OpenAIImagePart = {
+  type: "image_url";
+  image_url: { url: string };
 };
-type AnthropicContent = AnthropicTextBlock | AnthropicImageBlock;
+type OpenAIContentPart = OpenAITextPart | OpenAIImagePart;
 
 function isSupportedImageType(type: string): boolean {
   return ["image/jpeg", "image/png", "image/gif", "image/webp"].includes(type);
 }
 
-function toAnthropicMessages(messages: ChatMessage[]) {
+function toOpenAIMessages(messages: ChatMessage[]) {
   return messages
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => {
@@ -44,7 +44,7 @@ function toAnthropicMessages(messages: ChatMessage[]) {
         return { role: "assistant" as const, content: message.content };
       }
 
-      const content: AnthropicContent[] = [];
+      const content: OpenAIContentPart[] = [];
       if (message.content.trim()) {
         content.push({ type: "text", text: message.content });
       }
@@ -56,12 +56,8 @@ function toAnthropicMessages(messages: ChatMessage[]) {
               ? attachment.base64Data.split(",", 2)[1]
               : attachment.base64Data;
             content.push({
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: attachment.type,
-                data,
-              },
+              type: "image_url",
+              image_url: { url: `data:${attachment.type};base64,${data}` },
             });
           }
         } else if (attachment.textContent) {
@@ -76,7 +72,10 @@ function toAnthropicMessages(messages: ChatMessage[]) {
         content.push({ type: "text", text: "Please inspect the attached file." });
       }
 
-      return { role: "user" as const, content };
+      return {
+        role: "user" as const,
+        content: content.length === 1 && content[0].type === "text" ? content[0].text : content,
+      };
     });
 }
 
@@ -120,19 +119,24 @@ function createClientTextStream(upstreamBody: ReadableStream<Uint8Array>) {
 
             try {
               const payload = JSON.parse(data) as {
-                type?: string;
-                delta?: { type?: string; text?: string };
+                choices?: Array<{
+                  delta?: { content?: string | Array<{ type?: string; text?: string }> };
+                }>;
                 error?: { message?: string };
               };
+              const delta = payload.choices?.[0]?.delta?.content;
+              const text = Array.isArray(delta)
+                ? delta.map((part) => part.text ?? "").join("")
+                : delta;
 
-              if (payload.type === "content_block_delta" && payload.delta?.text) {
+              if (text) {
                 controller.enqueue(
-                  encoder.encode(`data: ${JSON.stringify({ text: payload.delta.text })}\n\n`),
+                  encoder.encode(`data: ${JSON.stringify({ text })}\n\n`),
                 );
-              } else if (payload.type === "error") {
+              } else if (payload.error) {
                 controller.enqueue(
                   encoder.encode(
-                    `data: ${JSON.stringify({ error: payload.error?.message ?? "MaxPlus AI stream failed." })}\n\n`,
+                    `data: ${JSON.stringify({ error: payload.error.message ?? "MaxPlus AI stream failed." })}\n\n`,
                   ),
                 );
                 close();
@@ -178,19 +182,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "At least one message is required." }, { status: 400 });
     }
 
-    const upstreamResponse = await fetch(MAXPLUS_MESSAGES_URL, {
+    const upstreamResponse = await fetch(MAXPLUS_CHAT_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        "anthropic-version": ANTHROPIC_VERSION,
         "content-type": "application/json",
       },
       body: JSON.stringify({
         model: getApiModel(body.model ?? "Zeta"),
-        max_tokens: 4096,
+        max_tokens: 16384,
+        temperature: 0.4,
         stream: true,
-        system: PROFESSIONAL_SYSTEM_PROMPT,
-        messages: toAnthropicMessages(body.messages),
+        messages: [
+          { role: "system", content: PROFESSIONAL_SYSTEM_PROMPT },
+          ...toOpenAIMessages(body.messages),
+        ],
       }),
       cache: "no-store",
     });

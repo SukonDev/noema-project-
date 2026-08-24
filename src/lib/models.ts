@@ -1,8 +1,8 @@
 export const MODEL_OPTIONS = [
-  { id: "Zeta", label: "Zeta", hint: "Haiku", apiModel: "claude-haiku-4-5-20251001" },
-  { id: "Alpha", label: "Alpha", hint: "Sonnet 5", apiModel: "claude-sonnet-5" },
-  { id: "Beta", label: "Beta", hint: "Opus 5", apiModel: "claude-opus-5" },
-  { id: "Gamma", label: "Gamma", hint: "Fable 5", apiModel: "claude-fable-5" },
+  { id: "Zeta", label: "Zeta", hint: "เร็ว • คำถามทั่วไป", apiModel: "gemini-3.1-flash-lite" },
+  { id: "Alpha", label: "Alpha", hint: "สมดุล • งานทั่วไปและโค้ด", apiModel: "gemini-3.5-flash" },
+  { id: "Beta", label: "Beta", hint: "คิดลึก • โค้ดซับซ้อนและงานยาว", apiModel: "gemini-3.1-pro-preview" },
+  { id: "Gamma", label: "Gamma", hint: "คุณภาพสูง • เขียนและวิเคราะห์", apiModel: "gemini-3.7-flash" },
 ] as const;
 
 export type ChatModelId = (typeof MODEL_OPTIONS)[number]["id"];
