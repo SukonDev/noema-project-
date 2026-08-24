@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./ChatInput.module.css";
+import logoBrand from "@/assets/icons/logo-brand.png";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -255,6 +256,12 @@ export default function ChatInput({
                         setModelMenuOpen(false);
                       }}
                     >
+                      <img
+                        src={logoBrand.src}
+                        alt=""
+                        className={styles.modelLogo}
+                        draggable={false}
+                      />
                       {m.label}
                     </button>
                   ))}

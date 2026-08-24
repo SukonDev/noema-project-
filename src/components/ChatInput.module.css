@@ -204,7 +204,7 @@
 .modelMenu {
   left: auto;
   right: 0;
-  min-width: 154px;
+  min-width: 142px;
   background: #ffffff;
   border-color: #dfddd6;
   border-radius: 9px;
@@ -215,10 +215,19 @@
 
 .modelMenu .menuItem {
   border-radius: 5px;
-  padding: 6px 9px;
-  gap: 8px;
+  min-height: 26px;
+  padding: 3px 8px;
+  gap: 6px;
   font-size: 13px;
+  line-height: 18px;
   color: #3f3f3f;
+}
+
+.modelLogo {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  object-fit: contain;
 }
 
 .modelMenu .menuItem:hover,
@@ -300,11 +309,12 @@
   }
 
   .modelMenu {
-    min-width: 146px;
+    min-width: 136px;
   }
 
   .modelMenu .menuItem {
-    padding: 6px 8px;
+    min-height: 24px;
+    padding: 2px 7px;
     font-size: 13px;
   }
 }
