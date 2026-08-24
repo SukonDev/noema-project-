@@ -93,6 +93,7 @@
   width: fit-content !important;
   max-width: min(100%, 680px) !important;
   align-self: flex-end !important;
+  align-items: flex-end;
   background: transparent;
   padding: 0;
 }
