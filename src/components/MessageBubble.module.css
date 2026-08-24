@@ -15,6 +15,25 @@
   margin-right: 0;
 }
 
+.row.rowUser {
+  align-items: flex-end !important;
+  justify-content: flex-end;
+}
+
+.row.rowUser .bubbleUser {
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.row.rowUser .messageAttachments {
+  justify-content: end;
+}
+
+.row.rowUser .userMeta {
+  align-self: flex-end;
+}
+
 .rowAssistant {
   align-items: flex-start;
 }
