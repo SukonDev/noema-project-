@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
-import type { ChatAttachment, ChatMessage, GeneratedFile } from "@/types";
+import type { ChatAttachment, ChatMessage, GeneratedFile, WebSource } from "@/types";
 import type { ChatModelId } from "@/lib/models";
 import logoFull from "@/assets/icons/logo-full.png";
 
@@ -109,6 +109,7 @@ export default function ChatPage() {
     };
     let streamedContent = "";
     let generatedFiles: GeneratedFile[] = [];
+    let webSources: WebSource[] = [];
 
     try {
       const response = await fetch("/api/chat", {
@@ -147,6 +148,7 @@ export default function ChatPage() {
             error?: string;
             tool?: { name?: string; label?: string; status?: "running" | "complete" };
             file?: GeneratedFile;
+            sources?: WebSource[];
           };
           if (payload.error) throw new Error(payload.error);
           if (payload.tool?.status === "running") {
@@ -167,16 +169,31 @@ export default function ChatPage() {
               ),
             );
           }
+          if (payload.sources?.length) {
+            webSources = payload.sources;
+            setMessages((current) =>
+              current.map((message) =>
+                message.id === assistantId
+                  ? { ...message, sources: webSources }
+                  : message,
+              ),
+            );
+          }
           if (payload.text) {
             streamedContent += payload.text;
             setMessages((current) => {
               const assistantExists = current.some((message) => message.id === assistantId);
               if (!assistantExists) {
-                return [...current, { ...assistantMessage, content: streamedContent, files: generatedFiles }];
+                return [...current, {
+                  ...assistantMessage,
+                  content: streamedContent,
+                  files: generatedFiles,
+                  sources: webSources,
+                }];
               }
               return current.map((message) =>
                 message.id === assistantId
-                  ? { ...message, content: streamedContent, files: generatedFiles }
+                  ? { ...message, content: streamedContent, files: generatedFiles, sources: webSources }
                   : message,
               );
             });

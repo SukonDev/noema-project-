@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { ChatMessage } from "@/types";
+import type { ChatMessage, WebSource } from "@/types";
 import { getApiModel } from "@/lib/models";
 import {
   AGENT_TOOLS,
@@ -281,6 +281,13 @@ function getToolLabel(name: string): string {
   return "Using a tool...";
 }
 
+function formatSourceCitations(sources: WebSource[]): string {
+  if (sources.length === 0) return "";
+  return `\n\n### Sources\n${sources
+    .map((source) => `- [${source.title.replace(/[\[\]]/g, "")}](${source.url})`)
+    .join("\n")}`;
+}
+
 function createAgentStream(
   initialMessages: OpenAIMessage[],
   model: string,
@@ -293,6 +300,7 @@ function createAgentStream(
     async start(controller) {
       let closed = false;
       const conversation = [...initialMessages];
+      const collectedSources: WebSource[] = [];
 
       const close = () => {
         if (!closed) {
@@ -378,6 +386,7 @@ function createAgentStream(
           activeReader = null;
 
           if (toolCalls.size === 0) {
+            if (collectedSources.length > 0) emit({ text: formatSourceCitations(collectedSources) });
             if (finishReason === "length") emit({ warning: "The response reached the output limit. Ask Noema to continue." });
             emit({ done: true });
             close();
@@ -393,6 +402,12 @@ function createAgentStream(
             emit({ tool: { name: call.function.name, label: getToolLabel(call.function.name), status: "running" } });
             const result = await executeAgentTool(call.function.name, call.function.arguments);
             if (result.file) emit({ file: result.file });
+            if (result.sources?.length) {
+              for (const source of result.sources) {
+                if (!collectedSources.some((existing) => existing.url === source.url)) collectedSources.push(source);
+              }
+              emit({ sources: result.sources });
+            }
             conversation.push({ role: "tool", content: result.content, tool_call_id: call.id });
             emit({ tool: { name: call.function.name, label: getToolLabel(call.function.name), status: "complete" } });
           }
@@ -440,6 +455,14 @@ export async function POST(request: Request) {
 - ใช้ search_web เมื่อผู้ใช้ขอค้นข้อมูลปัจจุบัน แหล่งอ้างอิง ลิงก์ หรือข้อมูลที่อาจเปลี่ยนแปลง
 - ใช้ create_file เมื่อผู้ใช้ขอให้สร้างไฟล์ และใส่เนื้อหาให้ครบในไฟล์เดียวที่ดาวน์โหลดได้
 - หลัง tool ทำงาน ให้สรุปผลตามข้อมูลที่ tool คืนมา ห้ามแต่งผลลัพธ์หรืออ้างว่าเขียนไฟล์ลง server ถ้าไม่ได้ทำจริง`,
+      },
+      {
+        role: "system",
+        content: `Search citation rules:
+- When search_web is used, rely on the fetched page content and the exact URLs returned by the tool.
+- Cite every factual claim that came from the web with an inline Markdown link using the exact source URL, for example [Source title](https://example.com/page).
+- Do not invent URLs, cite DuckDuckGo itself instead of the result page, or cite a page that was not returned by search_web.
+- Finish with a concise "Sources" section containing the most relevant exact source links.`,
       },
       ...toOpenAIMessages(body.messages),
     ];

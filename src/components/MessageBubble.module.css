@@ -400,6 +400,95 @@
   outline-offset: 2px;
 }
 
+.sources {
+  margin-top: 14px;
+}
+
+.sourcesTitle {
+  margin: 0 0 7px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sourceList {
+  display: grid;
+  gap: 6px;
+}
+
+.sourceLink {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition-property: background-color, border-color, color;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+.sourceLink:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sourceLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sourceIcon {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 20px;
+  color: var(--text-secondary);
+}
+
+.sourceIcon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.sourceText {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  flex: 1;
+}
+
+.sourceName,
+.sourceDomain {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceName {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sourceDomain {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+
+.sourceExternalIcon {
+  flex: 0 0 14px;
+  color: var(--text-secondary);
+}
+
 .actionStatus {
   margin-left: 4px;
   color: var(--text-secondary);
