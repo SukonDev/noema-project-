@@ -63,7 +63,7 @@ export default function MessageList({ messages, isGenerating = false }: MessageL
           </div>
         ))}
 
-        {isGenerating && (
+        {isGenerating && messages[messages.length - 1]?.role !== "assistant" && (
           <div className={styles.messageRow}>
             <ThinkingIndicator />
           </div>

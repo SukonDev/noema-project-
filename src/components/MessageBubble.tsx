@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./MessageBubble.module.css";
 import type { ChatMessage } from "@/types";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -13,6 +13,20 @@ interface MessageBubbleProps {
 
 function CodeBlock({ code, language }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewCloseRef = useRef<HTMLButtonElement>(null);
+  const isHtml = language === "html" || language === "htm";
+
+  useEffect(() => {
+    if (!previewOpen) return;
+
+    previewCloseRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [previewOpen]);
 
   const copyCode = async () => {
     if (!navigator.clipboard) return;
@@ -26,28 +40,71 @@ function CodeBlock({ code, language }: { code: string; language?: string }) {
     <div className={styles.codeBlock}>
       <div className={styles.codeToolbar}>
         <span className={styles.codeLanguage}>{language ?? "code"}</span>
-        <button
-          className={`${styles.codeCopy} ${copied ? styles.codeCopyCopied : ""}`}
-          type="button"
-          onClick={copyCode}
-          aria-label={copied ? "Copied" : "Copy code"}
-          title={copied ? "Copied" : "Copy code"}
-        >
-          {copied ? (
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" stroke="currentColor" strokeWidth="1.2" />
-            </svg>
+        <div className={styles.codeActions}>
+          {isHtml && (
+            <button
+              className={styles.codePreview}
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              aria-label="Preview HTML"
+            >
+              Preview
+            </button>
           )}
-        </button>
+          <button
+            className={`${styles.codeCopy} ${copied ? styles.codeCopyCopied : ""}`}
+            type="button"
+            onClick={copyCode}
+            aria-label={copied ? "Copied" : "Copy code"}
+            title={copied ? "Copied" : "Copy code"}
+          >
+            {copied ? (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
       <pre>
         <code>{code}</code>
       </pre>
+      {previewOpen && (
+        <div
+          className={styles.htmlPreviewOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="html-preview-title"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div className={styles.htmlPreviewDialog} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.htmlPreviewHeader}>
+              <h2 id="html-preview-title">HTML preview</h2>
+              <button
+                ref={previewCloseRef}
+                className={styles.htmlPreviewClose}
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                aria-label="Close HTML preview"
+              >
+                ×
+              </button>
+            </div>
+            <iframe
+              className={styles.htmlPreviewFrame}
+              title="HTML preview"
+              sandbox="allow-scripts"
+              referrerPolicy="no-referrer"
+              srcDoc={code}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
