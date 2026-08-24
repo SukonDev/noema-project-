@@ -1,6 +1,7 @@
 .row {
   display: flex;
   flex-direction: column;
+  width: 100%;
   padding: 0 var(--chat-padding-x);
 }
 
@@ -10,7 +11,8 @@
 
 .rowUser > .bubbleUser,
 .rowUser > .userMeta {
-  margin-inline-start: auto;
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .rowAssistant {
@@ -68,7 +70,7 @@
 .bubbleUser {
   width: fit-content !important;
   max-width: min(100%, 680px) !important;
-  align-self: flex-end;
+  align-self: flex-end !important;
   background: transparent;
   padding: 0;
 }
