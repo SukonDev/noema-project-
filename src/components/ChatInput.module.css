@@ -84,8 +84,8 @@
 }
 
 .modelPicker[aria-expanded="true"] {
-  background: #3c2d28;
-  color: #fff8f3;
+  background: #f7f5f0;
+  color: #3f3f3f;
 }
 
 .modelPicker:focus,
@@ -205,21 +205,21 @@
   left: auto;
   right: 0;
   min-width: 178px;
-  background: #3c2d28;
-  border-color: #59443a;
+  background: #ffffff;
+  border-color: #dfddd6;
   border-radius: 13px;
-  box-shadow: 0 12px 28px rgba(55, 35, 27, 0.24);
+  box-shadow: 0 12px 28px rgba(55, 50, 42, 0.14);
   transform-origin: bottom right;
 }
 
 .modelMenu .menuItem {
-  color: #fff8f3;
+  color: #3f3f3f;
 }
 
 .modelMenu .menuItem:hover,
 .modelMenu .menuItem[aria-selected="true"] {
-  background: #5a4035;
-  color: #fffdfb;
+  background: #f1f1ef;
+  color: #1a1a1a;
 }
 
 .sendButton {
