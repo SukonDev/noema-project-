@@ -109,3 +109,17 @@
     padding: 0 16px;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .shareButton {
+    border-color: #3b3b3b;
+    background: #1e1e1e;
+    color: #f3f1ed;
+  }
+
+  .shareButton:hover,
+  .menuButton:hover,
+  .sidebarToggle:hover {
+    background: #242424;
+  }
+}

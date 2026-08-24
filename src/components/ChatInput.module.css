@@ -178,25 +178,26 @@
 
 /* Compact 2-column attachment grid, matching the chat composer preview. */
 .attachmentList {
-  display: grid;
-  grid-template-columns: repeat(2, 88px);
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   width: fit-content;
   max-width: 100%;
-  overflow: visible;
 }
 
 .imageAttachmentChip {
-  width: 88px;
-  height: 66px;
-  max-width: 88px;
-  max-height: 66px;
+  width: 76px;
+  height: 58px;
+  max-width: 76px;
+  max-height: 58px;
+  flex: 0 0 76px;
 }
 
 .imageAttachmentChip .attachmentThumb {
-  width: 88px;
-  height: 66px;
-  max-width: 88px;
-  max-height: 66px;
+  width: 76px;
+  height: 58px;
+  max-width: 76px;
+  max-height: 58px;
   object-fit: cover;
 }
 
@@ -540,5 +541,40 @@
   .iconControl:active,
   .sendButton:active {
     scale: 1;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .welcomeWrapper .container {
+    border-color: #454545;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+  }
+
+  .attachmentChip,
+  .modelPicker[aria-expanded="true"] {
+    background: #202020;
+    color: #f3f1ed;
+  }
+
+  .attachmentFileIcon,
+  .attachmentRemove:hover {
+    background: #2b2b2b;
+    color: #d7d2c9;
+  }
+
+  .modelMenu {
+    background: #1d1d1d;
+    border-color: #3b3b3b;
+  }
+
+  .modelMenu .menuItem,
+  .modelPicker[aria-expanded="true"] {
+    color: #f3f1ed;
+  }
+
+  .modelMenu .menuItem:hover,
+  .modelMenu .menuItem[aria-selected="true"] {
+    background: #2c2c2c;
+    color: #ffffff;
   }
 }

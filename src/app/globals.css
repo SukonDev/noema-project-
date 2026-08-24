@@ -50,6 +50,22 @@
   --message-gap: 24px;
 }
 
+/* Follow the operating system appearance automatically. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-elevated: #262626;
+    --text-primary: #f3f1ed;
+    --text-secondary: #a8a49c;
+    --border: #363636;
+    --accent: #e97856;
+    --accent-hover: #f08a68;
+    --image-outline: oklch(1 0 0 / 0.14);
+    color-scheme: dark;
+  }
+}
+
 /* ── Reset ─────────────────────────────────────────────────────────── */
 
 *,

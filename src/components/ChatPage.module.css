@@ -15,7 +15,7 @@
 }
 
 .newMain {
-  background: #fff;
+  background: var(--bg-primary);
 }
 
 .welcomeArea {

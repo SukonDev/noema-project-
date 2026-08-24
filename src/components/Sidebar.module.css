@@ -235,3 +235,40 @@
     }
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    background: #181818;
+    border-color: #2d2d2d;
+  }
+
+  .closeButton:hover,
+  .primaryItem:hover,
+  .designButton:hover {
+    background: #242424;
+  }
+
+  .primaryItem,
+  .designButton,
+  .userName {
+    color: #e7e3dc;
+  }
+
+  .primaryIcon,
+  .avatar {
+    background: #2a2a2a;
+    color: #b8b3aa;
+  }
+
+  .item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .active {
+    background: #292929;
+  }
+
+  .footer {
+    border-color: #2d2d2d;
+  }
+}

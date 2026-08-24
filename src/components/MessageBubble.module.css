@@ -203,9 +203,11 @@
 /* Keep sent images content-sized. Grid columns may repeat, but a single
    image must never stretch to the full message width. */
 .bubbleUser .messageAttachments {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   width: fit-content;
-  max-width: min(100%, 286px);
-  grid-template-columns: repeat(2, 140px);
+  max-width: 100%;
 }
 
 .bubbleUser .messageAttachments:has(> :only-child) {
@@ -213,22 +215,21 @@
 }
 
 .bubbleUser .messageAttachment {
-  width: fit-content !important;
-  width: 140px !important;
-  max-width: 140px !important;
+  width: 76px !important;
+  max-width: 76px !important;
+  flex: 0 0 76px;
   min-width: 0;
 }
 
 .bubbleUser .messageAttachmentPreviewButton {
-  width: fit-content !important;
-  width: 140px !important;
-  max-width: 140px !important;
+  width: 76px !important;
+  max-width: 76px !important;
 }
 
 .bubbleUser .messageAttachmentImage {
   width: auto !important;
-  max-width: 140px !important;
-  max-height: 100px !important;
+  max-width: 76px !important;
+  max-height: 58px !important;
   height: auto !important;
   flex: 0 0 auto;
 }
@@ -485,5 +486,35 @@
 @media (max-width: 480px) {
   .bubble {
     max-width: 90%;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubbleUser .text {
+    background: #2a2a2a;
+    color: #f3f1ed;
+  }
+
+  .messageAttachment {
+    border-color: #3b3b3b;
+    background: #202020;
+  }
+
+  .messageAttachment:has(.messageAttachmentPreviewButton) {
+    background: transparent;
+  }
+
+  .markdown :not(pre) > code,
+  .markdown th {
+    background: #282828;
+  }
+
+  .codeBlock {
+    border-color: #3b3b3b;
+    background: #1d1d1d;
+  }
+
+  .codeToolbar {
+    border-color: #3b3b3b;
   }
 }
