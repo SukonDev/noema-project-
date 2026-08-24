@@ -176,6 +176,30 @@
   color: var(--text-primary);
 }
 
+/* Compact 2-column attachment grid, matching the chat composer preview. */
+.attachmentList {
+  display: grid;
+  grid-template-columns: repeat(2, 88px);
+  width: fit-content;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.imageAttachmentChip {
+  width: 88px;
+  height: 66px;
+  max-width: 88px;
+  max-height: 66px;
+}
+
+.imageAttachmentChip .attachmentThumb {
+  width: 88px;
+  height: 66px;
+  max-width: 88px;
+  max-height: 66px;
+  object-fit: cover;
+}
+
 .previewOverlay {
   position: fixed;
   inset: 0;
