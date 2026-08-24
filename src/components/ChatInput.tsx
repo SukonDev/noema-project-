@@ -28,9 +28,9 @@ export default function ChatInput({
   const modelRef = useRef<HTMLDivElement>(null);
 
   const MODELS = [
-    { id: "Zeta", label: "Zeta" },
-    { id: "Alpha", label: "Alpha" },
-    { id: "Beta", label: "Beta" },
+    { id: "Zeta", label: "Zeta", hint: "Fastest" },
+    { id: "Alpha", label: "Alpha", hint: "Balanced" },
+    { id: "Beta", label: "Beta", hint: "Most powerful" },
   ] as const;
 
   // Close the menus when clicking outside of them.
@@ -262,7 +262,28 @@ export default function ChatInput({
                         className={styles.modelLogo}
                         draggable={false}
                       />
-                      {m.label}
+                      <span className={styles.modelOptionText}>
+                        <span>{m.label}</span>
+                        <span className={styles.modelHint}>{m.hint}</span>
+                      </span>
+                      {selectedModel === m.id && (
+                        <svg
+                          className={styles.modelCheck}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="m3.5 8.25 3 3 6-6"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
                     </button>
                   ))}
                 </div>
