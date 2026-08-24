@@ -12,6 +12,13 @@
   flex: 0 0 28px;
 }
 
+.label {
+  margin-left: 10px;
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+
 .logo {
   width: 24px;
   height: 24px;

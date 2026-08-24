@@ -7,6 +7,7 @@ export default function ThinkingIndicator() {
       <div className={styles.icon} aria-hidden="true">
         <img className={styles.logo} src={logoFull.src} alt="" draggable={false} />
       </div>
+      <span className={styles.label}>Thinking...</span>
     </div>
   );
 }
