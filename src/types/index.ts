@@ -22,6 +22,14 @@ export interface GeneratedFile {
   mimeType: string;
 }
 
+export interface WebSource {
+  title: string;
+  url: string;
+  domain: string;
+  snippet: string;
+  faviconUrl: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -29,4 +37,5 @@ export interface ChatMessage {
   timestamp: string;
   attachments?: ChatAttachment[];
   files?: GeneratedFile[];
+  sources?: WebSource[];
 }

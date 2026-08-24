@@ -251,6 +251,48 @@ export default function MessageBubble({ message, isStreaming = false, onRetry }:
               </div>
             )}
 
+            {message.sources && message.sources.length > 0 && (
+              <section className={styles.sources} aria-label="Sources">
+                <p className={styles.sourcesTitle}>Sources</p>
+                <div className={styles.sourceList}>
+                  {message.sources.map((source) => (
+                    <a
+                      className={styles.sourceLink}
+                      href={source.url}
+                      key={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={source.snippet || source.url}
+                    >
+                      <span className={styles.sourceIcon} aria-hidden="true">
+                        <img
+                          src={source.faviconUrl}
+                          alt=""
+                          loading="lazy"
+                          onError={(event) => {
+                            event.currentTarget.hidden = true;
+                            const fallback = event.currentTarget.nextElementSibling;
+                            if (fallback instanceof HTMLElement) fallback.hidden = false;
+                          }}
+                        />
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+                          <path d="M2.8 8h10.4M8 2.5c1.3 1.5 2 3.3 2 5.5s-.7 4-2 5.5C6.7 12 6 10.2 6 8s.7-4 2-5.5Z" stroke="currentColor" strokeWidth="1.1" />
+                        </svg>
+                      </span>
+                      <span className={styles.sourceText}>
+                        <span className={styles.sourceName}>{source.title}</span>
+                        <span className={styles.sourceDomain}>{source.domain}</span>
+                      </span>
+                      <svg className={styles.sourceExternalIcon} width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M9 2.5h4.5V7M13.2 2.8 7.5 8.5M12 9v3.5a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {!isStreaming && message.content.trim() && (
               <div className={styles.assistantMeta}>
                 <button
