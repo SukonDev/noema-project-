@@ -238,18 +238,19 @@
   background: #3a3a3a;
 }
 
-/* Sent image attachments use the available message width so previews stay
-   readable instead of collapsing into tiny fixed-size tiles. */
+/* Keep sent previews compact while allowing the grid to shrink on narrow
+   message rows. Two columns are 140px each plus the existing 6px gap. */
 .bubbleUser .messageAttachments {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: visible;
-  width: min(100%, 586px) !important;
+  width: min(100%, 286px) !important;
   max-width: 100% !important;
 }
 
 .bubbleUser .messageAttachments:has(> :only-child) {
   grid-template-columns: minmax(0, 1fr);
+  width: min(100%, 140px) !important;
 }
 
 .bubbleUser .messageAttachment {
