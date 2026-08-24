@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
-import type { ChatMessage } from "@/types";
+import type { ChatAttachment, ChatMessage } from "@/types";
 import logoFull from "@/assets/icons/logo-full.png";
 
 const initialMessages: ChatMessage[] = [
@@ -91,7 +91,7 @@ export default function ChatPage() {
     return () => window.clearInterval(greetingTimer);
   }, []);
 
-  const handleSend = useCallback((content: string) => {
+  const handleSend = useCallback((content: string, attachments: ChatAttachment[] = []) => {
     // The welcome screen becomes the first chat as soon as the user sends a message.
     setSelectedConversationId((currentId) => currentId || "1");
 
@@ -99,6 +99,7 @@ export default function ChatPage() {
       id: `user-${Date.now()}`,
       role: "user",
       content,
+      attachments,
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",

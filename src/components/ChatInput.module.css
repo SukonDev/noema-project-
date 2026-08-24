@@ -57,6 +57,68 @@
   outline: none;
 }
 
+.attachmentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 8px 4px;
+}
+
+.attachmentChip {
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #f7f5f0;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.attachmentThumb,
+.attachmentFileIcon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 4px;
+}
+
+.attachmentThumb {
+  object-fit: cover;
+}
+
+.attachmentFileIcon {
+  display: grid;
+  place-items: center;
+  background: #e8e6e1;
+  color: #6d6b65;
+  font-size: 11px;
+}
+
+.attachmentName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachmentRemove {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.attachmentRemove:hover {
+  background: #e8e6e1;
+  color: var(--text-primary);
+}
+
 /* ── Attach (+) button & dropdown menu ───────────────────────────── */
 
 .attachWrapper {

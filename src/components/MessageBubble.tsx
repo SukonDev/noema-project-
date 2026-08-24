@@ -79,7 +79,21 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
     >
       {isUser ? (
         <div className={`${styles.bubble} ${styles.bubbleUser}`}>
-          <p className={styles.text}>{message.content}</p>
+          {message.attachments && message.attachments.length > 0 && (
+            <div className={styles.messageAttachments}>
+              {message.attachments.map((attachment) => (
+                <div className={styles.messageAttachment} key={attachment.id}>
+                  {attachment.url ? (
+                    <img src={attachment.url} alt={attachment.name} className={styles.messageAttachmentImage} />
+                  ) : (
+                    <span className={styles.messageAttachmentIcon} aria-hidden="true">文</span>
+                  )}
+                  <span className={styles.messageAttachmentName}>{attachment.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {message.content && <p className={styles.text}>{message.content}</p>}
         </div>
       ) : (
         <div className={styles.assistantMessage}>

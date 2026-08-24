@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./ChatInput.module.css";
 import logoFull from "@/assets/icons/logo-full.png";
+import type { ChatAttachment } from "@/types";
 
 interface ChatInputProps {
-  onSend: (message: string) => void;
+  onSend: (message: string, attachments: ChatAttachment[]) => void;
   isGenerating?: boolean;
   onStop?: () => void;
   variant?: "default" | "welcome";
@@ -21,6 +22,7 @@ export default function ChatInput({
   const [menuOpen, setMenuOpen] = useState(false);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState("Zeta");
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -64,20 +66,21 @@ export default function ChatInput({
   }, [adjustHeight]);
 
   const syncHasText = useCallback(() => {
-    setHasText(!!textareaRef.current?.value.trim());
-  }, []);
+    setHasText(!!textareaRef.current?.value.trim() || attachments.length > 0);
+  }, [attachments.length]);
 
   const sendMessage = () => {
     if (isGenerating) return;
     const value = textareaRef.current?.value.trim();
-    if (!value) return;
+    if (!value && attachments.length === 0) return;
 
-    onSend(value);
+    onSend(value ?? "", attachments);
     if (textareaRef.current) {
       textareaRef.current.value = "";
       textareaRef.current.style.height = "auto";
     }
     setHasText(false);
+    setAttachments([]);
   };
 
   const handleStop = () => {
@@ -117,9 +120,28 @@ export default function ChatInput({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    const nextAttachments = await Promise.all(
+      Array.from(files).map(async (file, index): Promise<ChatAttachment> => {
+        const isText = file.type.startsWith("text/") ||
+          /\.(md|txt|csv|json|xml|log|tsx?|jsx?|css|html)$/i.test(file.name);
+
+        return {
+          id: `${file.name}-${file.lastModified}-${index}`,
+          name: file.name,
+          type: file.type || "application/octet-stream",
+          size: file.size,
+          url: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+          textContent: isText ? await file.text() : undefined,
+        };
+      }),
+    );
+
+    setAttachments((current) => [...current, ...nextAttachments]);
+    setHasText(true);
 
     // TODO: hook up real upload logic — for now just log the selection.
     console.log(
@@ -127,6 +149,16 @@ export default function ChatInput({
       Array.from(files).map((f) => f.name),
     );
     e.target.value = "";
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments((current) => {
+      const attachment = current.find((item) => item.id === id);
+      if (attachment?.url) URL.revokeObjectURL(attachment.url);
+      const next = current.filter((item) => item.id !== id);
+      setHasText(!!textareaRef.current?.value.trim() || next.length > 0);
+      return next;
+    });
   };
 
   return (
@@ -150,6 +182,30 @@ export default function ChatInput({
           }}
           aria-label="Message input"
         />
+        {attachments.length > 0 && (
+          <div className={styles.attachmentList} aria-label="Attached files">
+            {attachments.map((attachment) => (
+              <div className={styles.attachmentChip} key={attachment.id}>
+                {attachment.url ? (
+                  <img src={attachment.url} alt="" className={styles.attachmentThumb} />
+                ) : (
+                  <span className={styles.attachmentFileIcon} aria-hidden="true">文</span>
+                )}
+                <span className={styles.attachmentName} title={attachment.name}>
+                  {attachment.name}
+                </span>
+                <button
+                  type="button"
+                  className={styles.attachmentRemove}
+                  onClick={() => removeAttachment(attachment.id)}
+                  aria-label={`Remove ${attachment.name}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className={styles.inputRow}>
           <div
             ref={attachRef}

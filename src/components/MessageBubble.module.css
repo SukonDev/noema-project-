@@ -71,6 +71,49 @@
   font-size: 15px;
 }
 
+.messageAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.messageAttachment {
+  max-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px;
+  border: 1px solid #deddda;
+  border-radius: 7px;
+  background: #faf9f7;
+  font-size: 12px;
+}
+
+.messageAttachmentImage {
+  width: 42px;
+  height: 42px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.messageAttachmentIcon {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: #e8e6e1;
+  color: #6d6b65;
+  font-size: 11px;
+}
+
+.messageAttachmentName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bubbleAssistant {
   background: transparent;
   padding: 4px 0 0;
