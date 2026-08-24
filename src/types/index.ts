@@ -12,6 +12,7 @@ export interface ChatAttachment {
   type: string;
   size: number;
   url?: string;
+  base64Data?: string;
   textContent?: string;
 }
 

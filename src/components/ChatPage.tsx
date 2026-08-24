@@ -7,6 +7,7 @@ import Header from "./Header";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import type { ChatAttachment, ChatMessage } from "@/types";
+import type { ChatModelId } from "@/lib/models";
 import logoFull from "@/assets/icons/logo-full.png";
 
 const initialMessages: ChatMessage[] = [
@@ -33,30 +34,6 @@ const conversationTitles: Record<string, string> = {
   "5": "SA-MP game files manifest generator",
 };
 
-const markdownTestResponse = [
-  "# Markdown test response",
-  "",
-  "This is **bold**, *italic*, ~~strikethrough~~, and `inline code`.",
-  "",
-  "> A blockquote rendered with GitHub Flavored Markdown.",
-  "",
-  "- Unordered item",
-  "- [x] Completed task",
-  "- [ ] Open task",
-  "",
-  "1. Ordered item",
-  "2. Another ordered item",
-  "",
-  "| Feature | Status |",
-  "| --- | --- |",
-  "| GFM | Supported |",
-  "| Code | Ready |",
-  "",
-  "```ts",
-  "const answer = 'Markdown works';",
-  "```",
-].join("\n");
-
 function getTimeGreeting() {
   const hour = new Date().getHours();
 
@@ -71,15 +48,12 @@ export default function ChatPage() {
   const [selectedConversationId, setSelectedConversationId] = useState("");
   const [greeting, setGreeting] = useState("Hello");
   const [isGenerating, setIsGenerating] = useState(false);
-  const generationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Clear any pending simulated response if the component unmounts.
   useEffect(() => {
     return () => {
-      if (generationTimeoutRef.current)
-        clearTimeout(generationTimeoutRef.current);
+      abortControllerRef.current?.abort();
     };
   }, []);
 
@@ -91,7 +65,13 @@ export default function ChatPage() {
     return () => window.clearInterval(greetingTimer);
   }, []);
 
-  const handleSend = useCallback((content: string, attachments: ChatAttachment[] = []) => {
+  const handleSend = useCallback(async (
+    content: string,
+    attachments: ChatAttachment[] = [],
+    model: ChatModelId = "Zeta",
+  ) => {
+    if (abortControllerRef.current) return;
+
     // The welcome screen becomes the first chat as soon as the user sends a message.
     setSelectedConversationId((currentId) => currentId || "1");
 
@@ -105,25 +85,46 @@ export default function ChatPage() {
         minute: "2-digit",
       }),
     };
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Simulated assistant response
+    const requestMessages = [...messages, userMessage];
+    setMessages(requestMessages);
+    setError(null);
     setIsGenerating(true);
-    generationTimeoutRef.current = setTimeout(() => {
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model, messages: requestMessages }),
+        signal: controller.signal,
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Unable to generate a response. Check your connection and try again.");
+      }
+
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content:
-          markdownTestResponse,
+        content: payload.content,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      setIsGenerating(false);
-    }, 3000);
-  }, []);
+    } catch (requestError) {
+      if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+      setError(requestError instanceof Error ? requestError.message : "Unable to generate a response.");
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+        setIsGenerating(false);
+      }
+    }
+  }, [messages]);
 
   const handleSelectConversation = useCallback((id: string) => {
     setSelectedConversationId(id);
@@ -131,16 +132,17 @@ export default function ChatPage() {
   }, []);
 
   const handleStop = useCallback(() => {
-    if (generationTimeoutRef.current) {
-      clearTimeout(generationTimeoutRef.current);
-      generationTimeoutRef.current = null;
-    }
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setIsGenerating(false);
   }, []);
 
   const handleNewChat = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setMessages([]);
     setSelectedConversationId("");
+    setError(null);
     setSidebarOpen(false);
   }, []);
 
@@ -175,6 +177,7 @@ export default function ChatPage() {
               <MessageList messages={messages} isGenerating={isGenerating} />
               <div className={styles.inputArea}>
                 <div className={styles.inputMaxWidth}>
+                  {error && <p className={styles.errorMessage} role="alert">{error}</p>}
                   <ChatInput onSend={handleSend} isGenerating={isGenerating} onStop={handleStop} />
                 </div>
               </div>
@@ -189,6 +192,7 @@ export default function ChatPage() {
                 <p className={styles.welcomeName}>Mr Philip</p>
               </div>
               <div className={styles.welcomeInput}>
+                {error && <p className={styles.errorMessage} role="alert">{error}</p>}
                 <ChatInput onSend={handleSend} isGenerating={isGenerating} onStop={handleStop} variant="welcome" />
               </div>
             </div>

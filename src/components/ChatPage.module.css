@@ -98,6 +98,17 @@
   pointer-events: auto;
 }
 
+.errorMessage {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid #d9a7a1;
+  border-radius: 10px;
+  background: #fff5f3;
+  color: #8f2f24;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 /* ── Mobile overlay ─────────────────────────────────────────────── */
 
 .overlay {
@@ -135,5 +146,17 @@
     to {
       opacity: 1;
     }
+  }
+
+  .errorMessage {
+    margin-inline: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .errorMessage {
+    border-color: #74423c;
+    background: #2b1b19;
+    color: #f1b2a9;
   }
 }

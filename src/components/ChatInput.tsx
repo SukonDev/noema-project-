@@ -5,12 +5,28 @@ import { createPortal } from "react-dom";
 import styles from "./ChatInput.module.css";
 import logoFull from "@/assets/icons/logo-full.png";
 import type { ChatAttachment } from "@/types";
+import { MODEL_OPTIONS, type ChatModelId } from "@/lib/models";
 
 interface ChatInputProps {
-  onSend: (message: string, attachments: ChatAttachment[]) => void;
+  onSend: (message: string, attachments: ChatAttachment[], model: ChatModelId) => void;
   isGenerating?: boolean;
   onStop?: () => void;
   variant?: "default" | "welcome";
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Unable to read image."));
+      }
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Unable to read image."));
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function ChatInput({
@@ -22,7 +38,7 @@ export default function ChatInput({
   const [hasText, setHasText] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("Zeta");
+  const [selectedModel, setSelectedModel] = useState<ChatModelId>("Zeta");
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -31,12 +47,11 @@ export default function ChatInput({
   const attachRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
 
-  const MODELS = [
-    { id: "Zeta", label: "Zeta", hint: "Fastest" },
-    { id: "Alpha", label: "Alpha", hint: "Balanced" },
-    { id: "Beta", label: "Beta", hint: "Most powerful" },
-  ] as const;
   const MAX_IMAGE_ATTACHMENTS = 4;
+  // Keep the encoded request below Vercel's default serverless body limit.
+  const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
+  const MAX_TOTAL_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
+  const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
   // Close the menus when clicking outside of them.
   useEffect(() => {
@@ -77,7 +92,7 @@ export default function ChatInput({
     const value = textareaRef.current?.value.trim();
     if (!value && attachments.length === 0) return;
 
-    onSend(value ?? "", attachments);
+    onSend(value ?? "", attachments, selectedModel);
     if (textareaRef.current) {
       textareaRef.current.value = "";
       textareaRef.current.style.height = "auto";
@@ -129,30 +144,67 @@ export default function ChatInput({
 
     const selectedFiles = Array.from(files);
     const currentImageCount = attachments.filter((item) => item.type.startsWith("image/")).length;
-    const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
+    const imageFiles = selectedFiles.filter(
+      (file) => file.type.startsWith("image/") && SUPPORTED_IMAGE_TYPES.includes(file.type),
+    );
+    const unsupportedImageFiles = selectedFiles.filter(
+      (file) => file.type.startsWith("image/") && !SUPPORTED_IMAGE_TYPES.includes(file.type),
+    );
     const otherFiles = selectedFiles.filter((file) => !file.type.startsWith("image/"));
     const availableImageSlots = Math.max(0, MAX_IMAGE_ATTACHMENTS - currentImageCount);
 
-    if (imageFiles.length > availableImageSlots) {
+    if (unsupportedImageFiles.length > 0) {
+      window.alert("Use JPEG, PNG, GIF, or WebP images.");
+    }
+
+    const imageFilesWithinSize = imageFiles.filter((file) => file.size <= MAX_IMAGE_SIZE_BYTES);
+    if (imageFilesWithinSize.length < imageFiles.length) {
+      window.alert("Each image must be 3 MB or smaller.");
+    }
+
+    const currentImageBytes = attachments
+      .filter((item) => item.type.startsWith("image/"))
+      .reduce((total, item) => total + item.size, 0);
+    const availableImageBytes = Math.max(0, MAX_TOTAL_IMAGE_SIZE_BYTES - currentImageBytes);
+    const acceptedImageFiles: File[] = [];
+    let acceptedImageBytes = 0;
+    for (const file of imageFilesWithinSize) {
+      if (
+        acceptedImageFiles.length < availableImageSlots &&
+        acceptedImageBytes + file.size <= availableImageBytes
+      ) {
+        acceptedImageFiles.push(file);
+        acceptedImageBytes += file.size;
+      }
+    }
+
+    if (acceptedImageFiles.length < imageFilesWithinSize.length) {
+      window.alert("Images in one message must total 3 MB or less.");
+    }
+
+    if (imageFilesWithinSize.length > availableImageSlots) {
       window.alert(`You can attach up to ${MAX_IMAGE_ATTACHMENTS} images per message.`);
     }
 
     const filesToAttach = [
       ...otherFiles,
-      ...imageFiles.slice(0, availableImageSlots),
+      ...acceptedImageFiles,
     ];
 
     const nextAttachments = await Promise.all(
       filesToAttach.map(async (file, index): Promise<ChatAttachment> => {
         const isText = file.type.startsWith("text/") ||
           /\.(md|txt|csv|json|xml|log|tsx?|jsx?|css|html)$/i.test(file.name);
+        const isImage = file.type.startsWith("image/");
+        const base64Data = isImage ? await readFileAsDataUrl(file) : undefined;
 
         return {
           id: `${file.name}-${file.lastModified}-${index}`,
           name: file.name,
           type: file.type || "application/octet-stream",
           size: file.size,
-          url: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+          url: base64Data,
+          base64Data,
           textContent: isText ? await file.text() : undefined,
         };
       }),
@@ -161,14 +213,11 @@ export default function ChatInput({
     setAttachments((current) => [...current, ...nextAttachments]);
     setHasText(true);
 
-    // TODO: hook up real upload logic — for now just log the selection.
     e.target.value = "";
   };
 
   const removeAttachment = (id: string) => {
     setAttachments((current) => {
-      const attachment = current.find((item) => item.id === id);
-      if (attachment?.url) URL.revokeObjectURL(attachment.url);
       const next = current.filter((item) => item.id !== id);
       setHasText(!!textareaRef.current?.value.trim() || next.length > 0);
       return next;
@@ -318,7 +367,7 @@ export default function ChatInput({
           <input
             ref={imageInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/gif,image/webp"
             multiple
             hidden
             onChange={handleFileChange}
@@ -326,7 +375,7 @@ export default function ChatInput({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.zip"
+            accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.txt,.csv,.xlsx,.zip"
             multiple
             hidden
             onChange={handleFileChange}
@@ -356,7 +405,7 @@ export default function ChatInput({
                   role="listbox"
                   aria-label="Models"
                 >
-                  {MODELS.map((m) => (
+                  {MODEL_OPTIONS.map((m) => (
                     <button
                       key={m.id}
                       className={styles.menuItem}
