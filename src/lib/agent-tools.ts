@@ -118,60 +118,55 @@ async function searchWeb(query: string, maxResults: number): Promise<AgentToolRe
   if (!normalizedQuery) return { content: JSON.stringify({ error: "A search query is required." }) };
 
   const limitedResults = Math.max(1, Math.min(maxResults || 5, 5));
-  const braveKey = process.env.BRAVE_SEARCH_API_KEY;
+  let htmlResults: Array<{ title: string; url: string; snippet: string }> = [];
 
-  if (braveKey) {
-    const response = await fetch(
-      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(normalizedQuery)}&count=${limitedResults}`,
-      {
-        headers: {
-          Accept: "application/json",
-          "X-Subscription-Token": braveKey,
-        },
-        signal: AbortSignal.timeout(10000),
+  try {
+    // DuckDuckGo may challenge server-side GET requests. POSTing the same form
+    // to the HTML endpoint consistently returns the lightweight result page.
+    const htmlResponse = await fetch("https://html.duckduckgo.com/html/", {
+      method: "POST",
+      headers: {
+        Accept: "text/html",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0 (compatible; Noema/1.0)",
       },
-    );
-
-    if (response.ok) {
-      const payload = (await response.json()) as {
-        web?: { results?: Array<{ title?: string; url?: string; description?: string }> };
-      };
-      const results = (payload.web?.results ?? []).slice(0, limitedResults).map((result) => ({
-        title: result.title ?? "Untitled result",
-        url: result.url ?? "",
-        snippet: result.description ?? "",
-      }));
-      return { content: JSON.stringify({ query: normalizedQuery, results }) };
-    }
-  }
-
-  const htmlResponse = await fetch(
-    `https://html.duckduckgo.com/html/?q=${encodeURIComponent(normalizedQuery)}`,
-    {
-      headers: { "User-Agent": "Noema/1.0 (+https://noema.app)" },
+      body: new URLSearchParams({ q: normalizedQuery }).toString(),
       signal: AbortSignal.timeout(10000),
-    },
-  );
-  const htmlResults = htmlResponse.ok
-    ? parseDuckDuckGoHtml(await htmlResponse.text(), limitedResults)
-    : [];
+    });
+
+    if (htmlResponse.ok) {
+      htmlResults = parseDuckDuckGoHtml(await htmlResponse.text(), limitedResults);
+    }
+  } catch {
+    // Continue to DuckDuckGo's JSON endpoint for instant answers below.
+  }
 
   if (htmlResults.length > 0) {
-    return { content: JSON.stringify({ query: normalizedQuery, results: htmlResults }) };
+    return {
+      content: JSON.stringify({
+        query: normalizedQuery,
+        source: "DuckDuckGo",
+        results: htmlResults,
+      }),
+    };
   }
 
-  const fallbackResponse = await fetch(
-    `https://api.duckduckgo.com/?q=${encodeURIComponent(normalizedQuery)}&format=json&no_html=1&skip_disambig=1`,
-    { signal: AbortSignal.timeout(10000) },
-  );
-  const fallback = fallbackResponse.ok
-    ? (await fallbackResponse.json()) as {
-        AbstractText?: string;
-        AbstractURL?: string;
-        Heading?: string;
-        RelatedTopics?: unknown[];
-      }
-    : {};
+  let fallback: {
+    AbstractText?: string;
+    AbstractURL?: string;
+    Heading?: string;
+    RelatedTopics?: unknown[];
+  } = {};
+  try {
+    const fallbackResponse = await fetch(
+      `https://api.duckduckgo.com/?q=${encodeURIComponent(normalizedQuery)}&format=json&no_html=1&skip_disambig=1`,
+      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000) },
+    );
+    if (fallbackResponse.ok) fallback = (await fallbackResponse.json()) as typeof fallback;
+  } catch {
+    // Return a structured error below instead of failing the whole chat stream.
+  }
+
   const fallbackResults: Array<{ title: string; url: string; snippet: string }> = [];
   if (fallback.AbstractText && fallback.AbstractURL) {
     fallbackResults.push({
@@ -185,8 +180,12 @@ async function searchWeb(query: string, maxResults: number): Promise<AgentToolRe
   return {
     content: JSON.stringify({
       query: normalizedQuery,
+      source: "DuckDuckGo",
       results: fallbackResults.slice(0, limitedResults),
-      note: "Search results may be limited. Verify important facts against the linked sources.",
+      note:
+        fallbackResults.length > 0
+          ? "DuckDuckGo returned an instant answer. Verify important facts against the linked sources."
+          : "DuckDuckGo did not return results for this query. Tell the user that no result was found and ask for a more specific query.",
     }),
   };
 }
