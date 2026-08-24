@@ -169,6 +169,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
+  isolation: isolate;
   width: 100vw;
   height: 100dvh;
   display: flex;
@@ -176,17 +177,19 @@
   justify-content: center;
   padding: 32px;
   box-sizing: border-box;
-  background: rgba(25, 23, 20, 0.72);
+  background: rgba(18, 18, 18, 0.94);
 }
 
 .previewImage {
   position: relative;
+  z-index: 2;
   inset: auto;
   display: block;
   margin: 0 auto;
   max-width: min(92vw, 960px);
   max-height: 88vh;
-  border-radius: 10px;
+  border: 1px solid #3b3b3b;
+  border-radius: 12px;
   object-fit: contain;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
 }
@@ -195,19 +198,21 @@
   position: fixed;
   top: 18px;
   right: 18px;
+  z-index: 20 !important;
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
+  border: 1px solid #4b4b4b;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: #3f3f3f;
+  background: #292929;
+  color: #f3f1ed;
   font-size: 24px;
   line-height: 1;
 }
 
 .previewClose:hover {
-  background: #ffffff;
+  background: #3a3a3a;
 }
 
 /* Keep sent images content-sized. Grid columns may repeat, but a single
