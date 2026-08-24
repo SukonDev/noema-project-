@@ -55,7 +55,10 @@ export default function MessageList({ messages, isGenerating = false }: MessageL
         )}
 
         {messages.map((msg) => (
-          <div key={msg.id} className={styles.messageRow}>
+          <div
+            key={msg.id}
+            className={`${styles.messageRow} ${msg.role === "user" ? styles.userMessageRow : ""}`}
+          >
             <MessageBubble message={msg} />
           </div>
         ))}

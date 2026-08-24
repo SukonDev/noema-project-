@@ -8,6 +8,7 @@
 .rowUser {
   width: fit-content;
   max-width: 100%;
+  margin-left: auto;
   align-items: flex-end;
 }
 

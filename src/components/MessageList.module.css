@@ -23,8 +23,7 @@
   animation: message-enter 400ms ease-out backwards;
 }
 
-/* User messages are content-sized and anchored to the right edge. */
-.messageRow:has(.rowUser) {
+.userMessageRow {
   display: flex;
   justify-content: flex-end;
   width: 100%;
