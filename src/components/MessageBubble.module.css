@@ -200,6 +200,35 @@
   background: #ffffff;
 }
 
+/* Keep sent images content-sized. Grid columns may repeat, but a single
+   image must never stretch to the full message width. */
+.bubbleUser .messageAttachments {
+  width: fit-content;
+  max-width: min(100%, 576px);
+  grid-template-columns: repeat(2, minmax(0, 280px));
+}
+
+.bubbleUser .messageAttachments:has(> :only-child) {
+  grid-template-columns: minmax(0, 280px);
+}
+
+.bubbleUser .messageAttachment {
+  width: fit-content;
+  max-width: 280px;
+  min-width: 0;
+}
+
+.bubbleUser .messageAttachmentPreviewButton {
+  width: fit-content;
+  max-width: 280px;
+}
+
+.bubbleUser .messageAttachmentImage {
+  width: auto;
+  max-width: 280px;
+  max-height: 220px;
+}
+
 .bubbleAssistant {
   background: transparent;
   padding: 4px 0 0;
