@@ -204,29 +204,31 @@
    image must never stretch to the full message width. */
 .bubbleUser .messageAttachments {
   width: fit-content;
-  max-width: min(100%, 576px);
-  grid-template-columns: repeat(2, minmax(0, 280px));
+  max-width: min(100%, 366px);
+  grid-template-columns: repeat(2, minmax(0, 180px));
 }
 
 .bubbleUser .messageAttachments:has(> :only-child) {
-  grid-template-columns: minmax(0, 280px);
+  grid-template-columns: minmax(0, 180px);
 }
 
 .bubbleUser .messageAttachment {
-  width: fit-content;
-  max-width: 280px;
+  width: fit-content !important;
+  max-width: 180px !important;
   min-width: 0;
 }
 
 .bubbleUser .messageAttachmentPreviewButton {
-  width: fit-content;
-  max-width: 280px;
+  width: fit-content !important;
+  max-width: 180px !important;
 }
 
 .bubbleUser .messageAttachmentImage {
-  width: auto;
-  max-width: 280px;
-  max-height: 220px;
+  width: auto !important;
+  max-width: 180px !important;
+  max-height: 140px !important;
+  height: auto !important;
+  flex: 0 0 auto;
 }
 
 .bubbleAssistant {
