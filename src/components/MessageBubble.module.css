@@ -79,6 +79,7 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 4px;
+  align-self: flex-end;
 }
 
 .messageAttachment {
@@ -104,9 +105,10 @@
 }
 
 .messageAttachmentImage {
-  width: 42px;
-  height: 42px;
-  border-radius: 5px;
+  width: 180px;
+  height: 140px;
+  display: block;
+  border-radius: 11px;
   object-fit: cover;
 }
 
