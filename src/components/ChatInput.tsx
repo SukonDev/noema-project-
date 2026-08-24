@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./ChatInput.module.css";
-import logoBrand from "@/assets/icons/logo-brand.png";
+import logoFull from "@/assets/icons/logo-full.png";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -257,7 +257,7 @@ export default function ChatInput({
                       }}
                     >
                       <img
-                        src={logoBrand.src}
+                        src={logoFull.src}
                         alt=""
                         className={styles.modelLogo}
                         draggable={false}
