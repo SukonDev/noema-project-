@@ -61,12 +61,15 @@
 }
 
 .bubbleUser {
-  background: #f1f1f0;
-  border-radius: 12px;
-  padding: 9px 16px;
+  background: transparent;
+  padding: 0;
 }
 
 .bubbleUser .text {
+  display: block;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background: #f1f1f0;
   font-family: var(--font-body);
   font-size: 15px;
 }
@@ -88,6 +91,16 @@
   border-radius: 7px;
   background: #faf9f7;
   font-size: 12px;
+}
+
+.messageAttachment:has(.messageAttachmentPreviewButton) {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.messageAttachment:has(.messageAttachmentPreviewButton) .messageAttachmentName {
+  display: none;
 }
 
 .messageAttachmentImage {

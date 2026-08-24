@@ -23,6 +23,7 @@ export default function ChatInput({
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState("Zeta");
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -185,9 +186,26 @@ export default function ChatInput({
         {attachments.length > 0 && (
           <div className={styles.attachmentList} aria-label="Attached files">
             {attachments.map((attachment) => (
-              <div className={styles.attachmentChip} key={attachment.id}>
+              <div
+                className={`${styles.attachmentChip} ${attachment.url ? styles.imageAttachmentChip : ""}`}
+                key={attachment.id}
+              >
                 {attachment.url ? (
-                  <img src={attachment.url} alt="" className={styles.attachmentThumb} />
+                  <img
+                    src={attachment.url}
+                    alt={attachment.name}
+                    className={styles.attachmentThumb}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setPreviewUrl(attachment.url ?? null)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setPreviewUrl(attachment.url ?? null);
+                      }
+                    }}
+                    aria-label={`Preview ${attachment.name}`}
+                  />
                 ) : (
                   <span className={styles.attachmentFileIcon} aria-hidden="true">文</span>
                 )}
@@ -204,6 +222,30 @@ export default function ChatInput({
                 </button>
               </div>
             ))}
+          </div>
+        )}
+        {previewUrl && (
+          <div
+            className={styles.previewOverlay}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Image preview"
+            onClick={() => setPreviewUrl(null)}
+          >
+            <button
+              type="button"
+              className={styles.previewClose}
+              onClick={() => setPreviewUrl(null)}
+              aria-label="Close image preview"
+            >
+              ×
+            </button>
+            <img
+              src={previewUrl}
+              alt="Attachment preview"
+              className={styles.previewImage}
+              onClick={(event) => event.stopPropagation()}
+            />
           </div>
         )}
         <div className={styles.inputRow}>
