@@ -264,6 +264,7 @@ async function requestCompletion(
       },
       body: JSON.stringify(payload),
       cache: "no-store",
+      signal: AbortSignal.timeout(120000),
     });
   };
 
@@ -288,10 +289,20 @@ function formatSourceCitations(sources: WebSource[]): string {
     .join("\n")}`;
 }
 
+function getForcedSearchQuery(messages: ChatMessage[]): string | undefined {
+  const lastUserMessage = [...messages].reverse().find((message) => message.role === "user");
+  if (!lastUserMessage) return undefined;
+
+  const content = lastUserMessage.content.trim();
+  const searchIntent = /\b(search|browse|look up|latest|current|today|news|source|citation|link)\b|ค้น(?:หา|เว็บ|ข้อมูล)|เว็บ|ข่าวล่าสุด|ข้อมูลล่าสุด|แหล่งอ้างอิง|ลิงก์/i;
+  return searchIntent.test(content) ? content.slice(0, 500) : undefined;
+}
+
 function createAgentStream(
   initialMessages: OpenAIMessage[],
   model: string,
   apiKey: string,
+  options: { forcedSearchQuery?: string } = {},
 ) {
   const encoder = new TextEncoder();
   let activeReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -313,8 +324,28 @@ function createAgentStream(
       };
 
       try {
+        if (options.forcedSearchQuery) {
+          const searchCall: AgentToolCall = {
+            id: "forced-search",
+            type: "function",
+            function: {
+              name: "search_web",
+              arguments: JSON.stringify({ query: options.forcedSearchQuery, max_results: 5 }),
+            },
+          };
+          emit({ tool: { name: "search_web", label: getToolLabel("search_web"), status: "running" } });
+          const searchResult = await executeAgentTool(searchCall.function.name, searchCall.function.arguments);
+          if (searchResult.sources?.length) {
+            collectedSources.push(...searchResult.sources);
+            emit({ sources: searchResult.sources });
+          }
+          conversation.push({ role: "assistant", content: null, tool_calls: [searchCall] });
+          conversation.push({ role: "tool", content: searchResult.content, tool_call_id: searchCall.id });
+          emit({ tool: { name: "search_web", label: getToolLabel("search_web"), status: "complete" } });
+        }
+
         for (let round = 0; round < 4 && !closed; round += 1) {
-          const upstreamResponse = await requestCompletion(apiKey, model, conversation, true);
+          const upstreamResponse = await requestCompletion(apiKey, model, conversation, !options.forcedSearchQuery);
           if (!upstreamResponse.ok) {
             const payload = await upstreamResponse.json().catch(() => null);
             throw new Error(payload?.error?.message ?? payload?.message ?? "MaxPlus AI request failed.");
@@ -448,6 +479,7 @@ export async function POST(request: Request) {
     }
 
     const model = getApiModel(body.model ?? "Zeta");
+    const forcedSearchQuery = getForcedSearchQuery(body.messages);
     const messages: OpenAIMessage[] = [
       {
         role: "system",
@@ -467,7 +499,7 @@ export async function POST(request: Request) {
       ...toOpenAIMessages(body.messages),
     ];
 
-    return new Response(createAgentStream(messages, model, apiKey), {
+    return new Response(createAgentStream(messages, model, apiKey, { forcedSearchQuery }), {
       headers: {
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
