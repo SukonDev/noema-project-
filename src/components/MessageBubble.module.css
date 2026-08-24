@@ -109,7 +109,8 @@
 .messageAttachmentImage {
   width: 100%;
   height: auto;
-  aspect-ratio: 1 / 1;
+  max-width: 180px;
+  max-height: 140px;
   display: block;
   border-radius: 11px;
   object-fit: cover;
@@ -151,13 +152,21 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  display: grid;
-  place-items: center;
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 32px;
+  box-sizing: border-box;
   background: rgba(25, 23, 20, 0.72);
 }
 
 .previewImage {
+  position: relative;
+  inset: auto;
+  display: block;
+  margin: 0 auto;
   max-width: min(92vw, 960px);
   max-height: 88vh;
   border-radius: 10px;
@@ -166,7 +175,7 @@
 }
 
 .previewClose {
-  position: absolute;
+  position: fixed;
   top: 18px;
   right: 18px;
   width: 34px;
