@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { ChatMessage } from "@/types";
 import { getApiModel } from "@/lib/models";
 
-const MAXPLUS_MESSAGES_URL = "https://api.maxplus-ai.cc/cmax-lite/v1/messages";
+const MAXPLUS_MESSAGES_URL = "https://api.maxplus-ai.cc/claude-max-20x-pure/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 
 const PROFESSIONAL_SYSTEM_PROMPT = `คุณคือ Noema ผู้ช่วยส่วนตัวของผู้ใช้ในแชตนี้ มีความรู้กว้าง คิดรอบคอบ พูดตรงไปตรงมา และเป็นเพื่อนร่วมงานที่เก่งและไว้ใจได้ เมื่อกล่าวถึงตัวเองให้ใช้ชื่อ Noema เป้าหมายคือให้คำตอบที่ถูกต้อง ใช้งานได้จริง และประหยัดเวลาที่สุด
