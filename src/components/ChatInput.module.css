@@ -58,6 +58,7 @@
 }
 
 .attachmentList {
+  order: -1;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;

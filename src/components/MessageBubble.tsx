@@ -72,6 +72,7 @@ const markdownComponents = {
 
 export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   return (
     <div
@@ -84,7 +85,14 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
               {message.attachments.map((attachment) => (
                 <div className={styles.messageAttachment} key={attachment.id}>
                   {attachment.url ? (
-                    <img src={attachment.url} alt={attachment.name} className={styles.messageAttachmentImage} />
+                    <button
+                      type="button"
+                      className={styles.messageAttachmentPreviewButton}
+                      onClick={() => setPreviewUrl(attachment.url ?? null)}
+                      aria-label={`Preview ${attachment.name}`}
+                    >
+                      <img src={attachment.url} alt={attachment.name} className={styles.messageAttachmentImage} />
+                    </button>
                   ) : (
                     <span className={styles.messageAttachmentIcon} aria-hidden="true">文</span>
                   )}
@@ -165,6 +173,31 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           </button>
         </div>
       ) : null}
+
+      {previewUrl && (
+        <div
+          className={styles.previewOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image preview"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <button
+            type="button"
+            className={styles.previewClose}
+            onClick={() => setPreviewUrl(null)}
+            aria-label="Close image preview"
+          >
+            ×
+          </button>
+          <img
+            src={previewUrl}
+            alt="Attachment preview"
+            className={styles.previewImage}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
