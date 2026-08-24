@@ -92,6 +92,17 @@ export default function ChatPage() {
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    const assistantId = `assistant-${Date.now()}`;
+    const assistantMessage: ChatMessage = {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+    let streamedContent = "";
 
     try {
       const response = await fetch("/api/chat", {
@@ -100,22 +111,63 @@ export default function ChatPage() {
         body: JSON.stringify({ model, messages: requestMessages }),
         signal: controller.signal,
       });
-      const payload = await response.json().catch(() => null);
       if (!response.ok) {
+        const payload = await response.json().catch(() => null);
         throw new Error(payload?.error ?? "Unable to generate a response. Check your connection and try again.");
       }
 
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: payload.content,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (!response.body) throw new Error("The response did not include a readable stream.");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let done = false;
+
+      while (!done) {
+        const result = await reader.read();
+        buffer += decoder.decode(result.value, { stream: !result.done });
+        const events = buffer.split(/\r?\n\r?\n/);
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const dataLine = event
+            .split(/\r?\n/)
+            .find((line) => line.startsWith("data:"));
+          if (!dataLine) continue;
+
+          const payload = JSON.parse(dataLine.slice(5).trim()) as {
+            text?: string;
+            done?: boolean;
+            error?: string;
+          };
+          if (payload.error) throw new Error(payload.error);
+          if (payload.text) {
+            streamedContent += payload.text;
+            setMessages((current) => {
+              const assistantExists = current.some((message) => message.id === assistantId);
+              if (!assistantExists) {
+                return [...current, { ...assistantMessage, content: streamedContent }];
+              }
+              return current.map((message) =>
+                message.id === assistantId
+                  ? { ...message, content: streamedContent }
+                  : message,
+              );
+            });
+          }
+          if (payload.done) done = true;
+        }
+
+        if (result.done) done = true;
+      }
+
+      if (!streamedContent) throw new Error("MaxPlus AI returned an empty response.");
     } catch (requestError) {
+      setMessages((current) =>
+        streamedContent && !(requestError instanceof DOMException && requestError.name === "AbortError")
+          ? current
+          : current.filter((message) => message.id !== assistantId),
+      );
       if (requestError instanceof DOMException && requestError.name === "AbortError") return;
       setError(requestError instanceof Error ? requestError.message : "Unable to generate a response.");
     } finally {
