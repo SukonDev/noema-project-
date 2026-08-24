@@ -8,6 +8,11 @@
   align-items: flex-end;
 }
 
+.rowUser > .bubbleUser,
+.rowUser > .userMeta {
+  margin-inline-start: auto;
+}
+
 .rowAssistant {
   align-items: flex-start;
 }
@@ -206,15 +211,15 @@
 /* Keep sent images content-sized. Grid columns may repeat, but a single
    image must never stretch to the full message width. */
 .bubbleUser .messageAttachments {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 76px);
+  overflow: visible;
   width: max-content !important;
-  max-width: min(100%, 366px) !important;
+  max-width: min(100%, 158px) !important;
 }
 
 .bubbleUser .messageAttachments:has(> :only-child) {
-  grid-template-columns: 140px;
+  grid-template-columns: 76px;
 }
 
 .bubbleUser .messageAttachment {
@@ -230,10 +235,11 @@
 }
 
 .bubbleUser .messageAttachmentImage {
-  width: auto !important;
+  width: 76px !important;
+  height: 76px !important;
   max-width: 76px !important;
-  max-height: 58px !important;
-  height: auto !important;
+  max-height: 76px !important;
+  object-fit: cover;
   flex: 0 0 auto;
 }
 

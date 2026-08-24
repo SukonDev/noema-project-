@@ -187,17 +187,17 @@
 
 .imageAttachmentChip {
   width: 76px;
-  height: 58px;
+  height: 76px;
   max-width: 76px;
-  max-height: 58px;
+  max-height: 76px;
   flex: 0 0 76px;
 }
 
 .imageAttachmentChip .attachmentThumb {
   width: 76px;
-  height: 58px;
+  height: 76px;
   max-width: 76px;
-  max-height: 58px;
+  max-height: 76px;
   object-fit: cover;
 }
 
