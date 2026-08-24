@@ -1,0 +1,303 @@
+.wrapper {
+  padding: 0 var(--chat-padding-x) 20px;
+}
+
+.welcomeWrapper {
+  padding: 0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  background: var(--bg-primary);
+  transition-property: border-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.welcomeWrapper .container {
+  padding: 9px 12px 10px;
+  border-color: #bdbdb9;
+  border-radius: 19px;
+  box-shadow: 0 8px 20px rgba(20, 20, 19, 0.06);
+}
+
+.container:focus-within {
+  border-color: var(--text-secondary);
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.textarea {
+  font-size: 16px; /* Prevents iOS auto-zoom */
+  line-height: 1.5;
+  min-height: 36px;
+  max-height: 200px;
+  padding: 10px 8px 4px;
+  color: var(--text-primary);
+  overflow-y: hidden;
+}
+
+.textarea::placeholder {
+  color: #8b8a84;
+}
+
+/* The container border already signals focus — no inner outline needed. */
+.textarea:focus,
+.textarea:focus-visible {
+  outline: none;
+}
+
+/* ── Attach (+) button & dropdown menu ───────────────────────────── */
+
+.attachWrapper {
+  position: relative;
+}
+
+.modelPicker {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #3f3f3f;
+  white-space: nowrap;
+}
+
+.modelPicker:hover,
+.modelPicker[aria-expanded="true"] {
+  background: transparent;
+  color: #1a1a1a;
+}
+
+.modelPicker[aria-expanded="true"] {
+  background: #3c2d28;
+  color: #fff8f3;
+}
+
+.modelPicker:focus,
+.modelPicker:focus-visible {
+  outline: none;
+}
+
+.modelExtra {
+  color: #9b9a94;
+  font-weight: 400;
+}
+
+.rightControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.iconControl {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #777;
+}
+
+.attachButton:active,
+.iconControl:active,
+.sendButton:active {
+  scale: 0.96;
+}
+
+.iconControl:hover {
+  background: #f1f1ef;
+  color: #333;
+}
+
+.disclaimer {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #9b9a94;
+}
+
+.attachButton {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition-property: background-color, color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.attachButton:hover,
+.attachButton[aria-expanded="true"] {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 190px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(20, 20, 19, 0.14);
+  z-index: 20;
+  transform-origin: bottom left;
+  animation: menu-enter 150ms ease-out;
+}
+
+@keyframes menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  transition-property: background-color;
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+}
+
+.menuItem:hover {
+  background: var(--bg-secondary);
+}
+
+/* The model menu uses a softer warm-dark surface so it feels like part of
+   the input instead of a sharp system popover. */
+.modelMenu {
+  left: auto;
+  right: 0;
+  min-width: 178px;
+  background: #3c2d28;
+  border-color: #59443a;
+  border-radius: 13px;
+  box-shadow: 0 12px 28px rgba(55, 35, 27, 0.24);
+  transform-origin: bottom right;
+}
+
+.modelMenu .menuItem {
+  color: #fff8f3;
+}
+
+.modelMenu .menuItem:hover,
+.modelMenu .menuItem[aria-selected="true"] {
+  background: #5a4035;
+  color: #fffdfb;
+}
+
+.sendButton {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  /* Grey while empty — pastel orange once there is text to send. */
+  background: var(--border);
+  color: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* Exact properties only — never transition: all */
+  transition-property: background-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.sendButton:disabled {
+  cursor: default;
+}
+
+.sendButton:not(:disabled) {
+  background: var(--accent);
+}
+
+/* ── Stop button (while generating) — same color as send ─────────── */
+
+.stopButton {
+  cursor: pointer;
+}
+
+/* Inline SVGs sit on the text baseline, which nudges them upward inside
+   a flex button — flex-centering the wrapper keeps the arrow centered. */
+.sendIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stopIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 0 16px 12px;
+  }
+
+  /* Menus open upward near the bottom edge — align right so they stay
+     on-screen, and enlarge touch targets for mobile. */
+  .menu {
+    left: auto;
+    right: 0;
+    min-width: 200px;
+    transform-origin: bottom right;
+  }
+
+  .menuItem {
+    padding: 13px 14px;
+    font-size: 15px;
+  }
+
+  .modelPicker {
+    padding: 8px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attachButton:active,
+  .iconControl:active,
+  .sendButton:active {
+    scale: 1;
+  }
+}

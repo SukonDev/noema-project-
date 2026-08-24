@@ -1,0 +1,327 @@
+.row {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--chat-padding-x);
+}
+
+.rowUser {
+  align-items: flex-end;
+}
+
+.rowAssistant {
+  align-items: flex-start;
+}
+
+.assistantMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.assistantIcon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  margin-top: 4px;
+}
+
+.assistantIcon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.assistantBody {
+  min-width: 0;
+  max-width: 680px;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.bubble {
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubbleUser {
+  background: #f1f1f0;
+  border-radius: 12px;
+  padding: 9px 16px;
+}
+
+.bubbleUser .text {
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.bubbleAssistant {
+  background: transparent;
+  padding: 4px 0 0;
+  max-width: 100%;
+}
+
+.text {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.42;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.assistantContent {
+  max-width: 100%;
+}
+
+.time {
+  font-size: 12px;
+  color: #9b9a94;
+}
+
+.userMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.rowUser:hover .userMeta {
+  opacity: 1;
+}
+
+/* Touch devices have no hover — always show the actions there. */
+@media (hover: none) {
+  .userMeta {
+    opacity: 1;
+  }
+}
+
+.metaButton {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  color: #9b9a94;
+  transition-property: background-color, color;
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
+}
+
+.metaButton:hover {
+  background: #f1f1ef;
+  color: #555;
+}
+
+.assistantMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown blockquote,
+.markdown pre,
+.markdown table,
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  margin: 0 0 14px;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  font-family: var(--font-display);
+  line-height: 1.25;
+}
+
+.markdown h1 { font-size: 1.45em; }
+.markdown h2 { font-size: 1.3em; }
+.markdown h3 { font-size: 1.15em; }
+
+.markdown ul,
+.markdown ol {
+  padding-inline-start: 24px;
+}
+
+.markdown ul {
+  list-style: disc;
+}
+
+.markdown ol {
+  list-style: decimal;
+}
+
+.markdown li + li {
+  margin-top: 5px;
+}
+
+.markdown blockquote {
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.markdown :not(pre) > code {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: #f1f1f0;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+.codeBlock {
+  margin: 0 0 12px;
+  overflow: hidden;
+  border: 1px solid #e2e1de;
+  border-radius: 8px;
+  background: #f4f3f1;
+}
+
+.codeToolbar {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px 3px 10px;
+  border-bottom: 1px solid #e2e1de;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+
+.codeLanguage {
+  text-transform: lowercase;
+}
+
+.codeCopy {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--text-secondary);
+  transition-property: opacity;
+  transition-duration: 120ms;
+  box-shadow: none;
+}
+
+.codeCopyCopied {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.codeCopy:focus,
+.codeCopy:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.codeBlock pre {
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px 12px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 0.9em;
+}
+
+.markdown th,
+.markdown td {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  text-align: start;
+}
+
+.markdown th {
+  background: #f4f3f1;
+  font-weight: 600;
+}
+
+.markdown a {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bubbleUser .time {
+  align-self: flex-end;
+}
+
+.bubbleAssistant .time {
+  align-self: flex-start;
+}
+
+/* Subtle outline for any embedded images — scoped to the module */
+.bubble img {
+  outline: 1px solid var(--image-outline);
+  outline-offset: -1px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .row {
+    padding: 0 16px;
+  }
+
+  .bubble {
+    max-width: 82%;
+  }
+}
+
+@media (max-width: 480px) {
+  .bubble {
+    max-width: 90%;
+  }
+}

@@ -1,0 +1,139 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.newMain {
+  background: #fff;
+}
+
+.welcomeArea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  padding: 0;
+}
+
+.welcomeContent {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  width: min(675px, calc(100% - 80px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.welcomeIdentity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  text-align: center;
+}
+
+.welcomeGreeting {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.welcomeName {
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.welcomeLogo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  user-select: none;
+}
+
+.welcomeInput {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+.inputArea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  /* Let clicks pass through the empty space around the floating input */
+  pointer-events: none;
+}
+
+.inputMaxWidth {
+  max-width: var(--chat-max-width);
+  margin: 0 auto;
+  width: 100%;
+  pointer-events: auto;
+}
+
+/* ── Mobile overlay ─────────────────────────────────────────────── */
+
+.overlay {
+  display: none;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .welcomeArea {
+    padding: 0;
+  }
+
+  .welcomeContent {
+    width: calc(100% - 32px);
+  }
+
+  .welcomeInput {
+    margin-top: 24px;
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 19, 0.3);
+    z-index: 90;
+    animation: overlay-enter 200ms ease-out;
+  }
+
+  @keyframes overlay-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

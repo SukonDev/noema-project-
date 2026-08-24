@@ -1,0 +1,57 @@
+.thinking {
+  display: flex;
+  align-items: center;
+  padding: 8px var(--chat-padding-x);
+}
+
+.icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+}
+
+.logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  animation: logo-thinking 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes logo-thinking {
+  0%,
+  100% {
+    opacity: 0.68;
+    filter: blur(1px);
+    transform: translateY(1px) scale(0.86) rotate(-6deg);
+  }
+
+  38% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(-2px) scale(1) rotate(4deg);
+  }
+
+  68% {
+    opacity: 0.86;
+    filter: blur(0.4px);
+    transform: translateY(0) scale(0.94) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .thinking {
+    padding-inline: 16px;
+  }
+}
