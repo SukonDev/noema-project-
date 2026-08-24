@@ -90,7 +90,17 @@ export default function ChatInput({
     }
   };
 
-  const toggleMenu = () => setMenuOpen((o) => !o);
+  const toggleMenu = () => {
+    // On phones, let the browser open the native file picker directly.
+    // The custom upward menu is too easy to collide with the keyboard.
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      setMenuOpen(false);
+      fileInputRef.current?.click();
+      return;
+    }
+
+    setMenuOpen((o) => !o);
+  };
 
   const openFilePicker = (kind: "image" | "file") => {
     setMenuOpen(false);
