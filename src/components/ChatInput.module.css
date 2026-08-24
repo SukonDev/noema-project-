@@ -59,8 +59,8 @@
 
 .attachmentList {
   order: -1;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 116px));
   gap: 6px;
   padding: 0 8px 4px;
 }
@@ -104,6 +104,11 @@
   overflow: hidden;
   border-radius: 10px;
   background: #e8e6e1;
+}
+
+.attachmentChip:not(.imageAttachmentChip) {
+  grid-column: 1 / -1;
+  width: fit-content;
 }
 
 .imageAttachmentChip .attachmentName {

@@ -35,6 +35,7 @@ export default function ChatInput({
     { id: "Alpha", label: "Alpha", hint: "Balanced" },
     { id: "Beta", label: "Beta", hint: "Most powerful" },
   ] as const;
+  const MAX_IMAGE_ATTACHMENTS = 4;
 
   // Close the menus when clicking outside of them.
   useEffect(() => {
@@ -125,8 +126,23 @@ export default function ChatInput({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const selectedFiles = Array.from(files);
+    const currentImageCount = attachments.filter((item) => item.type.startsWith("image/")).length;
+    const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
+    const otherFiles = selectedFiles.filter((file) => !file.type.startsWith("image/"));
+    const availableImageSlots = Math.max(0, MAX_IMAGE_ATTACHMENTS - currentImageCount);
+
+    if (imageFiles.length > availableImageSlots) {
+      window.alert(`You can attach up to ${MAX_IMAGE_ATTACHMENTS} images per message.`);
+    }
+
+    const filesToAttach = [
+      ...otherFiles,
+      ...imageFiles.slice(0, availableImageSlots),
+    ];
+
     const nextAttachments = await Promise.all(
-      Array.from(files).map(async (file, index): Promise<ChatAttachment> => {
+      filesToAttach.map(async (file, index): Promise<ChatAttachment> => {
         const isText = file.type.startsWith("text/") ||
           /\.(md|txt|csv|json|xml|log|tsx?|jsx?|css|html)$/i.test(file.name);
 
@@ -145,10 +161,6 @@ export default function ChatInput({
     setHasText(true);
 
     // TODO: hook up real upload logic — for now just log the selection.
-    console.log(
-      "Attached files:",
-      Array.from(files).map((f) => f.name),
-    );
     e.target.value = "";
   };
 
