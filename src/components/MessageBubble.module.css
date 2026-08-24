@@ -61,6 +61,8 @@
 }
 
 .bubbleUser {
+  width: fit-content;
+  max-width: 100%;
   background: transparent;
   padding: 0;
 }
@@ -80,7 +82,12 @@
   gap: 6px;
   margin-bottom: 4px;
   align-self: flex-end;
-  width: min(100%, 366px);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.messageAttachments:has(> :only-child) {
+  grid-template-columns: minmax(0, 180px);
 }
 
 .messageAttachment {
