@@ -9,9 +9,10 @@ import type { ChatMessage } from "@/types";
 interface MessageListProps {
   messages: ChatMessage[];
   isGenerating?: boolean;
+  onRetry?: (messageId: string) => void;
 }
 
-export default function MessageList({ messages, isGenerating = false }: MessageListProps) {
+export default function MessageList({ messages, isGenerating = false, onRetry }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,12 +55,16 @@ export default function MessageList({ messages, isGenerating = false }: MessageL
           </div>
         )}
 
-        {messages.map((msg) => (
+        {messages.map((msg, index) => (
           <div
             key={msg.id}
             className={`${styles.messageRow} ${msg.role === "user" ? styles.userMessageRow : ""}`}
           >
-            <MessageBubble message={msg} />
+            <MessageBubble
+              message={msg}
+              isStreaming={isGenerating && index === messages.length - 1 && msg.role === "assistant"}
+              onRetry={onRetry && msg.role === "assistant" ? () => onRetry(msg.id) : undefined}
+            />
           </div>
         ))}
 

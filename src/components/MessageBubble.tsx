@@ -9,6 +9,27 @@ import logoFull from "@/assets/icons/logo-full.png";
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  isStreaming?: boolean;
+  onRetry?: () => void;
+}
+
+async function copyToClipboard(text: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+
+  if (!copied) throw new Error("Copy failed");
 }
 
 function CodeBlock({ code, language }: { code: string; language?: string }) {
@@ -127,9 +148,31 @@ const markdownComponents = {
   },
 } satisfies Components;
 
-export default function MessageBubble({ message }: MessageBubbleProps) {
+export default function MessageBubble({ message, isStreaming = false, onRetry }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null);
+  const [actionStatus, setActionStatus] = useState("");
+
+  const copyAnswer = async () => {
+    try {
+      await copyToClipboard(message.content);
+      setCopied(true);
+      setActionStatus("Copied");
+      window.setTimeout(() => {
+        setCopied(false);
+        setActionStatus("");
+      }, 1600);
+    } catch {
+      setActionStatus("Copy failed");
+    }
+  };
+
+  const setResponseFeedback = (nextFeedback: "like" | "dislike") => {
+    setFeedback((current) => (current === nextFeedback ? null : nextFeedback));
+    setActionStatus(feedback === nextFeedback ? "" : "Thanks for the feedback");
+  };
 
   return (
     <div
@@ -177,35 +220,66 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
               </div>
             </div>
 
-            <div className={styles.assistantMeta}>
-              <button className={styles.metaButton} type="button" aria-label="Copy">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" stroke="currentColor" strokeWidth="1.2" />
-                </svg>
-              </button>
-              <button className={styles.metaButton} type="button" aria-label="Read aloud">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M2.5 6v4h2.5L9 13V3L5 6H2.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                  <path d="M11 5.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-              </button>
-              <button className={styles.metaButton} type="button" aria-label="Good response">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M4.5 7.5 7 2.5c.9 0 1.5.7 1.5 1.5v2.5h3.6c.8 0 1.4.8 1.2 1.6l-1 4.4a1.5 1.5 0 0 1-1.5 1.2H4.5m0-6.2v6.2m0-6.2H2.5v6.2h2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <button className={styles.metaButton} type="button" aria-label="Bad response">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ transform: "rotate(180deg)" }}>
-                  <path d="M4.5 7.5 7 2.5c.9 0 1.5.7 1.5 1.5v2.5h3.6c.8 0 1.4.8 1.2 1.6l-1 4.4a1.5 1.5 0 0 1-1.5 1.2H4.5m0-6.2v6.2m0-6.2H2.5v6.2h2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <button className={styles.metaButton} type="button" aria-label="Retry">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
+            {!isStreaming && message.content.trim() && (
+              <div className={styles.assistantMeta}>
+                <button
+                  className={`${styles.metaButton} ${copied ? styles.metaButtonActive : ""}`}
+                  type="button"
+                  onClick={copyAnswer}
+                  aria-label={copied ? "Copied answer" : "Copy answer"}
+                  title={copied ? "Copied" : "Copy answer"}
+                >
+                  {copied ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                      <path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" stroke="currentColor" strokeWidth="1.2" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  className={`${styles.metaButton} ${feedback === "like" ? styles.metaButtonActive : ""}`}
+                  type="button"
+                  onClick={() => setResponseFeedback("like")}
+                  aria-label="Like answer"
+                  aria-pressed={feedback === "like"}
+                  title="Like answer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M4.5 7.5 7 2.5c.9 0 1.5.7 1.5 1.5v2.5h3.6c.8 0 1.4.8 1.2 1.6l-1 4.4a1.5 1.5 0 0 1-1.5 1.2H4.5m0-6.2v6.2m0-6.2H2.5v6.2h2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button
+                  className={`${styles.metaButton} ${feedback === "dislike" ? styles.metaButtonActive : ""}`}
+                  type="button"
+                  onClick={() => setResponseFeedback("dislike")}
+                  aria-label="Dislike answer"
+                  aria-pressed={feedback === "dislike"}
+                  title="Dislike answer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ transform: "rotate(180deg)" }}>
+                    <path d="M4.5 7.5 7 2.5c.9 0 1.5.7 1.5 1.5v2.5h3.6c.8 0 1.4.8 1.2 1.6l-1 4.4a1.5 1.5 0 0 1-1.5 1.2H4.5m0-6.2v6.2m0-6.2H2.5v6.2h2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {onRetry && (
+                  <button
+                    className={styles.metaButton}
+                    type="button"
+                    onClick={onRetry}
+                    aria-label="Retry answer"
+                    title="Retry answer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                )}
+                {actionStatus && <span className={styles.actionStatus} role="status">{actionStatus}</span>}
+              </div>
+            )}
           </div>
         </div>
       )}

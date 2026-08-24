@@ -50,6 +50,7 @@ export default function ChatPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastModelRef = useRef<ChatModelId>("Zeta");
 
   useEffect(() => {
     return () => {
@@ -69,8 +70,10 @@ export default function ChatPage() {
     content: string,
     attachments: ChatAttachment[] = [],
     model: ChatModelId = "Zeta",
+    baseMessages: ChatMessage[] = messages,
   ) => {
     if (abortControllerRef.current) return;
+    lastModelRef.current = model;
 
     // The welcome screen becomes the first chat as soon as the user sends a message.
     setSelectedConversationId((currentId) => currentId || "1");
@@ -85,7 +88,7 @@ export default function ChatPage() {
         minute: "2-digit",
       }),
     };
-    const requestMessages = [...messages, userMessage];
+    const requestMessages = [...baseMessages, userMessage];
     setMessages(requestMessages);
     setError(null);
     setIsGenerating(true);
@@ -178,6 +181,29 @@ export default function ChatPage() {
     }
   }, [messages]);
 
+  const handleRetry = useCallback((assistantId: string) => {
+    if (abortControllerRef.current) return;
+
+    const assistantIndex = messages.findIndex((message) => message.id === assistantId);
+    if (assistantIndex < 0) return;
+
+    const userIndex = messages
+      .slice(0, assistantIndex)
+      .map((message) => message.role)
+      .lastIndexOf("user");
+    if (userIndex < 0) return;
+
+    const userMessage = messages[userIndex];
+    const history = messages.slice(0, userIndex);
+    setMessages(history);
+    void handleSend(
+      userMessage.content,
+      userMessage.attachments ?? [],
+      lastModelRef.current,
+      history,
+    );
+  }, [handleSend, messages]);
+
   const handleSelectConversation = useCallback((id: string) => {
     setSelectedConversationId(id);
     setMessages(id === "1" ? initialMessages : []);
@@ -226,7 +252,7 @@ export default function ChatPage() {
         {selectedConversationId ? (
           <>
             <div className={styles.chatArea}>
-              <MessageList messages={messages} isGenerating={isGenerating} />
+              <MessageList messages={messages} isGenerating={isGenerating} onRetry={handleRetry} />
               <div className={styles.inputArea}>
                 <div className={styles.inputMaxWidth}>
                   {error && <p className={styles.errorMessage} role="alert">{error}</p>}
