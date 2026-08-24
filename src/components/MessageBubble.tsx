@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./MessageBubble.module.css";
-import type { ChatMessage } from "@/types";
+import type { ChatMessage, GeneratedFile } from "@/types";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import logoFull from "@/assets/icons/logo-full.png";
@@ -30,6 +30,18 @@ async function copyToClipboard(text: string) {
   textarea.remove();
 
   if (!copied) throw new Error("Copy failed");
+}
+
+function downloadFile(file: GeneratedFile) {
+  const blob = new Blob([file.content], { type: file.mimeType || "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function CodeBlock({ code, language }: { code: string; language?: string }) {
@@ -219,6 +231,25 @@ export default function MessageBubble({ message, isStreaming = false, onRetry }:
                 </ReactMarkdown>
               </div>
             </div>
+
+            {message.files && message.files.length > 0 && (
+              <div className={styles.generatedFiles} aria-label="Generated files">
+                {message.files.map((file) => (
+                  <button
+                    className={styles.generatedFile}
+                    key={`${file.name}-${file.content.length}`}
+                    type="button"
+                    onClick={() => downloadFile(file)}
+                    title={`Download ${file.name}`}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13.5h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>{file.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {!isStreaming && message.content.trim() && (
               <div className={styles.assistantMeta}>

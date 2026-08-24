@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
-import type { ChatAttachment, ChatMessage } from "@/types";
+import type { ChatAttachment, ChatMessage, GeneratedFile } from "@/types";
 import type { ChatModelId } from "@/lib/models";
 import logoFull from "@/assets/icons/logo-full.png";
 
@@ -48,6 +48,7 @@ export default function ChatPage() {
   const [selectedConversationId, setSelectedConversationId] = useState("");
   const [greeting, setGreeting] = useState("Hello");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastModelRef = useRef<ChatModelId>("Zeta");
@@ -91,6 +92,7 @@ export default function ChatPage() {
     const requestMessages = [...baseMessages, userMessage];
     setMessages(requestMessages);
     setError(null);
+    setActiveTool(null);
     setIsGenerating(true);
 
     const controller = new AbortController();
@@ -106,6 +108,7 @@ export default function ChatPage() {
       }),
     };
     let streamedContent = "";
+    let generatedFiles: GeneratedFile[] = [];
 
     try {
       const response = await fetch("/api/chat", {
@@ -142,18 +145,38 @@ export default function ChatPage() {
             text?: string;
             done?: boolean;
             error?: string;
+            tool?: { name?: string; label?: string; status?: "running" | "complete" };
+            file?: GeneratedFile;
           };
           if (payload.error) throw new Error(payload.error);
+          if (payload.tool?.status === "running") {
+            setActiveTool(
+              payload.tool.label ??
+                (payload.tool.name === "search_web" ? "Searching the web..." : "Creating a file..."),
+            );
+          } else if (payload.tool?.status === "complete") {
+            setActiveTool(null);
+          }
+          if (payload.file) {
+            generatedFiles = [...generatedFiles, payload.file];
+            setMessages((current) =>
+              current.map((message) =>
+                message.id === assistantId
+                  ? { ...message, files: generatedFiles }
+                  : message,
+              ),
+            );
+          }
           if (payload.text) {
             streamedContent += payload.text;
             setMessages((current) => {
               const assistantExists = current.some((message) => message.id === assistantId);
               if (!assistantExists) {
-                return [...current, { ...assistantMessage, content: streamedContent }];
+                return [...current, { ...assistantMessage, content: streamedContent, files: generatedFiles }];
               }
               return current.map((message) =>
                 message.id === assistantId
-                  ? { ...message, content: streamedContent }
+                  ? { ...message, content: streamedContent, files: generatedFiles }
                   : message,
               );
             });
@@ -176,6 +199,7 @@ export default function ChatPage() {
     } finally {
       if (abortControllerRef.current === controller) {
         abortControllerRef.current = null;
+        setActiveTool(null);
         setIsGenerating(false);
       }
     }
@@ -220,6 +244,7 @@ export default function ChatPage() {
     abortControllerRef.current = null;
     setMessages([]);
     setSelectedConversationId("");
+    setActiveTool(null);
     setError(null);
     setSidebarOpen(false);
   }, []);
@@ -252,7 +277,12 @@ export default function ChatPage() {
         {selectedConversationId ? (
           <>
             <div className={styles.chatArea}>
-              <MessageList messages={messages} isGenerating={isGenerating} onRetry={handleRetry} />
+              <MessageList
+                messages={messages}
+                isGenerating={isGenerating}
+                activeTool={activeTool}
+                onRetry={handleRetry}
+              />
               <div className={styles.inputArea}>
                 <div className={styles.inputMaxWidth}>
                   {error && <p className={styles.errorMessage} role="alert">{error}</p>}

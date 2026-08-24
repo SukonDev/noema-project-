@@ -16,10 +16,17 @@ export interface ChatAttachment {
   textContent?: string;
 }
 
+export interface GeneratedFile {
+  name: string;
+  content: string;
+  mimeType: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: string;
   attachments?: ChatAttachment[];
+  files?: GeneratedFile[];
 }

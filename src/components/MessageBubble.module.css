@@ -359,6 +359,47 @@
   width: 100%;
 }
 
+.generatedFiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.generatedFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+  transition-property: background-color, border-color, color;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+.generatedFile span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.generatedFile:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.generatedFile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .actionStatus {
   margin-left: 4px;
   color: var(--text-secondary);
@@ -505,7 +546,7 @@
 }
 
 .codeBlock pre {
-  max-height: 320px;
+  max-height: min(70vh, 720px);
   overflow: auto;
   margin: 0;
   padding: 10px 12px;
@@ -657,6 +698,10 @@
   .metaButtonActive {
     background: #35332f;
     color: var(--accent);
+  }
+
+  .generatedFile {
+    background: #202020;
   }
 
   .messageAttachmentIcon {

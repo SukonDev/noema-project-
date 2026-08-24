@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { ChatMessage } from "@/types";
 import { getApiModel } from "@/lib/models";
+import {
+  AGENT_TOOLS,
+  executeAgentTool,
+  type AgentToolCall,
+} from "@/lib/agent-tools";
 
 const MAXPLUS_BASE_URL = "https://api.maxplus-ai.cc";
 
@@ -69,12 +74,27 @@ type OpenAIImagePart = {
   image_url: { url: string };
 };
 type OpenAIContentPart = OpenAITextPart | OpenAIImagePart;
+type OpenAIMessage =
+  | {
+      role: "system" | "user";
+      content: string | OpenAIContentPart[];
+    }
+  | {
+      role: "assistant";
+      content: string | null;
+      tool_calls?: AgentToolCall[];
+    }
+  | {
+      role: "tool";
+      content: string;
+      tool_call_id: string;
+    };
 
 function isSupportedImageType(type: string): boolean {
   return ["image/jpeg", "image/png", "image/gif", "image/webp"].includes(type);
 }
 
-function toOpenAIMessages(messages: ChatMessage[]) {
+function toOpenAIMessages(messages: ChatMessage[]): OpenAIMessage[] {
   return messages
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => {
@@ -201,6 +221,198 @@ function createClientTextStream(upstreamBody: ReadableStream<Uint8Array>) {
   });
 }
 
+type OpenAIStreamChunk = {
+  choices?: Array<{
+    delta?: {
+      content?: string | Array<{ type?: string; text?: string }>;
+      tool_calls?: Array<{
+        index?: number;
+        id?: string;
+        type?: "function";
+        function?: { name?: string; arguments?: string };
+      }>;
+    };
+    finish_reason?: string | null;
+  }>;
+  error?: { message?: string };
+};
+
+async function requestCompletion(
+  apiKey: string,
+  model: string,
+  messages: OpenAIMessage[],
+  includeTools: boolean,
+) {
+  const request = () => {
+    const payload: Record<string, unknown> = {
+      model,
+      max_tokens: 32768,
+      temperature: 0.4,
+      stream: true,
+      messages,
+    };
+    if (includeTools) {
+      payload.tools = AGENT_TOOLS;
+      payload.tool_choice = "auto";
+    }
+
+    return fetch(`${MAXPLUS_BASE_URL}/gemini-lite/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+  };
+
+  let response = await request();
+  if (includeTools && (response.status === 400 || response.status === 422)) {
+    const errorText = await response.clone().text();
+    if (/tool|function|unsupported|unknown/i.test(errorText)) response = await requestCompletion(apiKey, model, messages, false);
+  }
+  return response;
+}
+
+function getToolLabel(name: string): string {
+  if (name === "search_web") return "Searching the web...";
+  if (name === "create_file") return "Creating a file...";
+  return "Using a tool...";
+}
+
+function createAgentStream(
+  initialMessages: OpenAIMessage[],
+  model: string,
+  apiKey: string,
+) {
+  const encoder = new TextEncoder();
+  let activeReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let closed = false;
+      const conversation = [...initialMessages];
+
+      const close = () => {
+        if (!closed) {
+          closed = true;
+          controller.close();
+        }
+      };
+      const emit = (payload: Record<string, unknown>) => {
+        if (!closed) controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+      };
+
+      try {
+        for (let round = 0; round < 4 && !closed; round += 1) {
+          const upstreamResponse = await requestCompletion(apiKey, model, conversation, true);
+          if (!upstreamResponse.ok) {
+            const payload = await upstreamResponse.json().catch(() => null);
+            throw new Error(payload?.error?.message ?? payload?.message ?? "MaxPlus AI request failed.");
+          }
+          if (!upstreamResponse.body) throw new Error("MaxPlus AI did not return a stream.");
+
+          activeReader = upstreamResponse.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let upstreamDone = false;
+          let assistantText = "";
+          let finishReason: string | null = null;
+          const toolCalls = new Map<number, AgentToolCall>();
+
+          while (!upstreamDone && !closed) {
+            const { value, done } = await activeReader.read();
+            buffer += decoder.decode(value, { stream: !done });
+            const events = buffer.split(/\r?\n\r?\n/);
+            buffer = events.pop() ?? "";
+
+            for (const event of events) {
+              const dataLine = event
+                .split(/\r?\n/)
+                .find((line) => line.startsWith("data:"));
+              if (!dataLine) continue;
+
+              const data = dataLine.slice(5).trim();
+              if (data === "[DONE]") {
+                upstreamDone = true;
+                break;
+              }
+
+              let payload: OpenAIStreamChunk;
+              try {
+                payload = JSON.parse(data) as OpenAIStreamChunk;
+              } catch {
+                continue;
+              }
+
+              if (payload.error) throw new Error(payload.error.message ?? "MaxPlus AI stream failed.");
+              const choice = payload.choices?.[0];
+              if (choice?.finish_reason) finishReason = choice.finish_reason;
+
+              const delta = choice?.delta;
+              const text = Array.isArray(delta?.content)
+                ? delta.content.map((part) => part.text ?? "").join("")
+                : delta?.content;
+              if (text) {
+                assistantText += text;
+                emit({ text });
+              }
+
+              for (const toolDelta of delta?.tool_calls ?? []) {
+                const index = toolDelta.index ?? toolCalls.size;
+                const current = toolCalls.get(index) ?? {
+                  id: toolDelta.id ?? `call-${round}-${index}`,
+                  type: "function" as const,
+                  function: { name: "", arguments: "" },
+                };
+                current.id = current.id || toolDelta.id || `call-${round}-${index}`;
+                current.function.name += toolDelta.function?.name ?? "";
+                current.function.arguments += toolDelta.function?.arguments ?? "";
+                toolCalls.set(index, current);
+              }
+            }
+
+            if (done) upstreamDone = true;
+          }
+          activeReader = null;
+
+          if (toolCalls.size === 0) {
+            if (finishReason === "length") emit({ warning: "The response reached the output limit. Ask Noema to continue." });
+            emit({ done: true });
+            close();
+            return;
+          }
+
+          const calls = [...toolCalls.entries()]
+            .sort(([left], [right]) => left - right)
+            .map(([, call]) => call);
+          conversation.push({ role: "assistant", content: assistantText || null, tool_calls: calls });
+
+          for (const call of calls) {
+            emit({ tool: { name: call.function.name, label: getToolLabel(call.function.name), status: "running" } });
+            const result = await executeAgentTool(call.function.name, call.function.arguments);
+            if (result.file) emit({ file: result.file });
+            conversation.push({ role: "tool", content: result.content, tool_call_id: call.id });
+            emit({ tool: { name: call.function.name, label: getToolLabel(call.function.name), status: "complete" } });
+          }
+        }
+
+        emit({ error: "The tool workflow reached its safety limit. Please try a more focused request." });
+        close();
+      } catch (error) {
+        if (!closed) {
+          emit({ error: error instanceof Error ? error.message : "Unable to complete the tool workflow." });
+          close();
+        }
+      }
+    },
+    cancel() {
+      return activeReader?.cancel();
+    },
+  });
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.MAXPLUS_API_KEY;
   if (!apiKey) {
@@ -220,39 +432,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "At least one message is required." }, { status: 400 });
     }
 
-    const upstreamResponse = await fetch(`${MAXPLUS_BASE_URL}/gemini-lite/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
+    const model = getApiModel(body.model ?? "Zeta");
+    const messages: OpenAIMessage[] = [
+      {
+        role: "system",
+        content: `${PROFESSIONAL_SYSTEM_PROMPT}\n\n${PRODUCTION_AGENT_BEHAVIOR}\n\nเมื่อมี tool ให้ใช้ tool จริงตามคำขอ และอย่าอ้างว่าใช้ tool หากไม่ได้ใช้
+- ใช้ search_web เมื่อผู้ใช้ขอค้นข้อมูลปัจจุบัน แหล่งอ้างอิง ลิงก์ หรือข้อมูลที่อาจเปลี่ยนแปลง
+- ใช้ create_file เมื่อผู้ใช้ขอให้สร้างไฟล์ และใส่เนื้อหาให้ครบในไฟล์เดียวที่ดาวน์โหลดได้
+- หลัง tool ทำงาน ให้สรุปผลตามข้อมูลที่ tool คืนมา ห้ามแต่งผลลัพธ์หรืออ้างว่าเขียนไฟล์ลง server ถ้าไม่ได้ทำจริง`,
       },
-      body: JSON.stringify({
-        model: getApiModel(body.model ?? "Zeta"),
-        max_tokens: 16384,
-        temperature: 0.4,
-        stream: true,
-        messages: [
-          {
-            role: "system",
-            content: `${PROFESSIONAL_SYSTEM_PROMPT}\n\n${PRODUCTION_AGENT_BEHAVIOR}`,
-          },
-          ...toOpenAIMessages(body.messages),
-        ],
-      }),
-      cache: "no-store",
-    });
+      ...toOpenAIMessages(body.messages),
+    ];
 
-    if (!upstreamResponse.ok) {
-      const payload = await upstreamResponse.json().catch(() => null);
-      const message = payload?.error?.message ?? payload?.message ?? "MaxPlus AI request failed.";
-      return NextResponse.json({ error: message }, { status: upstreamResponse.status });
-    }
-
-    if (!upstreamResponse.body) {
-      return NextResponse.json({ error: "MaxPlus AI did not return a stream." }, { status: 502 });
-    }
-
-    return new Response(createClientTextStream(upstreamResponse.body), {
+    return new Response(createAgentStream(messages, model, apiKey), {
       headers: {
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",

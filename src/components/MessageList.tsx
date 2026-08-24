@@ -9,10 +9,16 @@ import type { ChatMessage } from "@/types";
 interface MessageListProps {
   messages: ChatMessage[];
   isGenerating?: boolean;
+  activeTool?: string | null;
   onRetry?: (messageId: string) => void;
 }
 
-export default function MessageList({ messages, isGenerating = false, onRetry }: MessageListProps) {
+export default function MessageList({
+  messages,
+  isGenerating = false,
+  activeTool = null,
+  onRetry,
+}: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,9 +74,9 @@ export default function MessageList({ messages, isGenerating = false, onRetry }:
           </div>
         ))}
 
-        {isGenerating && messages[messages.length - 1]?.role !== "assistant" && (
+        {isGenerating && (activeTool || messages[messages.length - 1]?.role !== "assistant") && (
           <div className={styles.messageRow}>
-            <ThinkingIndicator />
+            <ThinkingIndicator label={activeTool ?? undefined} />
           </div>
         )}
 
